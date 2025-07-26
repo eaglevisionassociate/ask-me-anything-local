@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ChatInterface } from "./ChatInterface";
+import { ExerciseList } from "./ExerciseList";
 
 interface Subject {
   id: string;
@@ -97,9 +98,10 @@ export const TutorDashboard = () => {
 
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="subjects">Subjects</TabsTrigger>
+            <TabsTrigger value="exercises">Exercises</TabsTrigger>
             <TabsTrigger value="chat">AI Tutor Chat</TabsTrigger>
           </TabsList>
 
@@ -275,6 +277,16 @@ export const TutorDashboard = () => {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          <TabsContent value="exercises" className="space-y-6">
+            <div className="mb-4">
+              <h2 className="text-2xl font-bold text-foreground mb-2">Mathematics Exercises</h2>
+              <p className="text-muted-foreground">
+                Practice problems from your Supabase database. Work through them and use the AI tutor for help!
+              </p>
+            </div>
+            <ExerciseList />
           </TabsContent>
 
           <TabsContent value="chat" className="space-y-6">
