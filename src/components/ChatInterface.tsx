@@ -40,7 +40,19 @@ export const ChatInterface = ({ tutorContext }: ChatInterfaceProps) => {
   const handleSendMessage = (content: string) => {
     let contextualMessage = content;
     
-    if (tutorContext) {
+    if (tutorContext && tutorContext.id === "math") {
+      contextualMessage = `As a Grade 8 Mathematics AI tutor, please help with this: ${content}
+
+Context: I'm a Grade 8 student studying Mathematics topics including ${tutorContext.topics.join(', ')}.
+
+Your capabilities include:
+1. Correcting student exercises and providing detailed explanations
+2. Creating new practice exercises when requested
+3. Explaining mathematical concepts step-by-step
+4. Providing hints and guidance for problem-solving
+
+Please provide educational, age-appropriate explanations that would help a Grade 8 student understand mathematical concepts better. If the student asks for exercises, generate appropriate Grade 8 level problems with solutions.`;
+    } else if (tutorContext) {
       contextualMessage = `As a Grade 8 ${tutorContext.name} tutor, please help with this question: ${content}. 
       
       Context: I'm studying ${tutorContext.name} topics including ${tutorContext.topics.join(', ')}. 
@@ -136,7 +148,9 @@ export const ChatInterface = ({ tutorContext }: ChatInterfaceProps) => {
                   {tutorContext ? `Welcome to ${tutorContext.name} Tutoring` : 'Welcome to Puter AI Chat'}
                 </h2>
                 <p className="text-muted-foreground max-w-md mb-4">
-                  {tutorContext 
+                  {tutorContext && tutorContext.id === "math"
+                    ? `I'm your Grade 8 Mathematics tutor! I can help you with ${tutorContext.topics.join(', ')}, correct your exercises, and create new practice problems. Just ask!`
+                    : tutorContext 
                     ? `I'm here to help you learn ${tutorContext.name}! Ask me about ${tutorContext.topics.join(', ')}, or any other questions you have.`
                     : 'Start a conversation with Claude Sonnet 4 or Claude Opus 4. Completely free with no API keys required!'
                   }
@@ -164,7 +178,7 @@ export const ChatInterface = ({ tutorContext }: ChatInterfaceProps) => {
             onSendMessage={handleSendMessage}
             isLoading={isLoading}
             disabled={!isPuterReady()}
-            placeholder={tutorContext ? `Ask me about ${tutorContext.name}...` : "Ask me anything..."}
+            placeholder={tutorContext && tutorContext.id === "math" ? "Ask for help, correction, or new exercises..." : tutorContext ? `Ask me about ${tutorContext.name}...` : "Ask me anything..."}
           />
         </div>
       </div>
