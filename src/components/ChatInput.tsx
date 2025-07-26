@@ -40,7 +40,7 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled }: ChatInputProps
       <Button
         type="submit"
         disabled={!message.trim() || isLoading || disabled}
-        className="h-[50px] px-4 bg-gradient-primary hover:opacity-90 transition-smooth shadow-glow"
+        className="h-[50px] px-4 bg-primary hover:opacity-90 transition-smooth shadow-glow"
       >
         {isLoading ? (
           <Loader2 className="w-5 h-5 animate-spin" />

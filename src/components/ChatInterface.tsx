@@ -28,13 +28,13 @@ export const ChatInterface = () => {
   }, [messages, isLoading]);
 
   return (
-    <div className="flex flex-col h-screen bg-gradient-background">
+    <div className="flex flex-col h-screen bg-background">
       {/* Header */}
       <div className="flex-shrink-0 bg-card border-b border-border p-4">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
-              <Brain className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-glow">
+              <Brain className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
               <h1 className="text-xl font-semibold text-foreground">Puter AI Chat</h1>
@@ -101,8 +101,8 @@ export const ChatInterface = () => {
 
             {messages.length === 0 && isPuterReady() && (
               <div className="flex flex-col items-center justify-center h-full text-center py-12">
-                <div className="w-16 h-16 bg-gradient-primary rounded-2xl flex items-center justify-center shadow-glow mb-4">
-                  <Brain className="w-8 h-8 text-white" />
+                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-glow mb-4">
+                  <Brain className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <h2 className="text-2xl font-semibold text-foreground mb-2">
                   Welcome to Puter AI Chat

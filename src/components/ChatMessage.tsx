@@ -13,8 +13,8 @@ interface ChatMessageProps {
 export const ChatMessage = ({ message }: ChatMessageProps) => {
   return (
     <div className={`flex gap-3 mb-6 message-animate ${message.isUser ? 'flex-row-reverse' : 'flex-row'}`}>
-      <Avatar className={`w-10 h-10 ${message.isUser ? 'bg-gradient-primary' : 'bg-secondary'} shadow-glow`}>
-        <AvatarFallback className={message.isUser ? 'text-white' : 'text-foreground'}>
+      <Avatar className={`w-10 h-10 ${message.isUser ? 'bg-primary' : 'bg-secondary'} shadow-glow`}>
+        <AvatarFallback className={message.isUser ? 'text-primary-foreground' : 'text-foreground'}>
           {message.isUser ? <User size={20} /> : <Bot size={20} />}
         </AvatarFallback>
       </Avatar>
@@ -24,7 +24,7 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
           className={`
             px-4 py-3 rounded-2xl shadow-message
             ${message.isUser 
-              ? 'bg-gradient-primary text-user-message-foreground' 
+              ? 'bg-primary text-primary-foreground' 
               : 'bg-ai-message text-ai-message-foreground border border-border'
             }
           `}
