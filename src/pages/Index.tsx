@@ -1,7 +1,7 @@
-import { ChatInterface } from "@/components/ChatInterface";
+import { TutorDashboard } from "@/components/TutorDashboard";
 
 const Index = () => {
-  return <ChatInterface />;
+  return <TutorDashboard />;
 };
 
 export default Index;

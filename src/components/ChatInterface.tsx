@@ -8,7 +8,17 @@ import { Trash2, Brain, Settings } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export const ChatInterface = () => {
+interface Subject {
+  id: string;
+  name: string;
+  topics: string[];
+}
+
+interface ChatInterfaceProps {
+  tutorContext?: Subject | null;
+}
+
+export const ChatInterface = ({ tutorContext }: ChatInterfaceProps) => {
   const {
     messages,
     sendMessage,
@@ -27,6 +37,19 @@ export const ChatInterface = () => {
     }
   }, [messages, isLoading]);
 
+  const handleSendMessage = (content: string) => {
+    let contextualMessage = content;
+    
+    if (tutorContext) {
+      contextualMessage = `As a Grade 8 ${tutorContext.name} tutor, please help with this question: ${content}. 
+      
+      Context: I'm studying ${tutorContext.name} topics including ${tutorContext.topics.join(', ')}. 
+      Please provide educational, age-appropriate explanations that would help a Grade 8 student understand the concept better.`;
+    }
+    
+    sendMessage(contextualMessage);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
@@ -37,9 +60,14 @@ export const ChatInterface = () => {
               <Brain className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-foreground">Puter AI Chat</h1>
+              <h1 className="text-xl font-semibold text-foreground">
+                {tutorContext ? `${tutorContext.name} AI Tutor` : 'Puter AI Chat'}
+              </h1>
               <p className="text-sm text-muted-foreground">
-                Ask me anything - powered by {selectedModel.replace('-', ' ').toUpperCase()}
+                {tutorContext 
+                  ? `Ask questions about ${tutorContext.name} - powered by ${selectedModel.replace('-', ' ').toUpperCase()}`
+                  : `Ask me anything - powered by ${selectedModel.replace('-', ' ').toUpperCase()}`
+                }
               </p>
             </div>
           </div>
@@ -105,10 +133,13 @@ export const ChatInterface = () => {
                   <Brain className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <h2 className="text-2xl font-semibold text-foreground mb-2">
-                  Welcome to Puter AI Chat
+                  {tutorContext ? `Welcome to ${tutorContext.name} Tutoring` : 'Welcome to Puter AI Chat'}
                 </h2>
                 <p className="text-muted-foreground max-w-md mb-4">
-                  Start a conversation with Claude Sonnet 4 or Claude Opus 4. Completely free with no API keys required!
+                  {tutorContext 
+                    ? `I'm here to help you learn ${tutorContext.name}! Ask me about ${tutorContext.topics.join(', ')}, or any other questions you have.`
+                    : 'Start a conversation with Claude Sonnet 4 or Claude Opus 4. Completely free with no API keys required!'
+                  }
                 </p>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
@@ -130,9 +161,10 @@ export const ChatInterface = () => {
       <div className="flex-shrink-0 bg-card border-t border-border p-4">
         <div className="max-w-4xl mx-auto">
           <ChatInput
-            onSendMessage={sendMessage}
+            onSendMessage={handleSendMessage}
             isLoading={isLoading}
             disabled={!isPuterReady()}
+            placeholder={tutorContext ? `Ask me about ${tutorContext.name}...` : "Ask me anything..."}
           />
         </div>
       </div>
