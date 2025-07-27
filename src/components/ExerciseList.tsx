@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useExercises, Exercise } from '@/hooks/useExercises';
-import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
+import { useGenerateExercise } from '@/hooks/useGenerateExercise';
+import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ExerciseListProps {
@@ -13,7 +14,8 @@ interface ExerciseListProps {
 }
 
 export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) => {
-  const { exercises, loading, error } = useExercises(lessonId);
+  const { exercises, loading, error, refetch } = useExercises(lessonId);
+  const { generateExercise, isGenerating } = useGenerateExercise();
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
   const [showAnswers, setShowAnswers] = useState<{ [key: string]: boolean }>({});
@@ -35,6 +37,19 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
       ...prev,
       [exerciseId]: !prev[exerciseId]
     }));
+  };
+
+  const handleGenerateExercise = async () => {
+    const newExercises = await generateExercise({
+      lessonId,
+      topic: 'mathematics',
+      difficulty: 'medium',
+      count: 2,
+    });
+    
+    if (newExercises) {
+      refetch();
+    }
   };
 
   const getDifficultyColor = (difficulty?: string) => {
@@ -99,7 +114,22 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Math Exercises</h3>
-        <Badge variant="outline">{exercises.length} problems</Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">{exercises.length} problems</Badge>
+          <Button
+            onClick={handleGenerateExercise}
+            disabled={isGenerating}
+            size="sm"
+            className="gap-2"
+          >
+            {isGenerating ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
+            {isGenerating ? 'Generating...' : 'Add More'}
+          </Button>
+        </div>
       </div>
 
       {exercises.map((exercise, index) => (
