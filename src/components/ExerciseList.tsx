@@ -162,12 +162,44 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
               <div className="space-y-4 border-t pt-4" onClick={(e) => e.stopPropagation()}>
                 <div>
                   <label className="text-sm font-medium mb-2 block">Your Answer:</label>
-                  <Textarea
-                    placeholder="Write your solution here..."
-                    value={userAnswers[exercise.id] || ''}
-                    onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
-                    className="min-h-20"
-                  />
+                  <div className="space-y-2">
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {['∞', '√', '%', 'π', '∑', '∫', '(', ')', '[', ']', '≠', '≤', '≥', '±', '×', '÷'].map((symbol) => (
+                        <Button
+                          key={symbol}
+                          variant="outline"
+                          size="sm"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const textarea = document.querySelector(`textarea[data-exercise-id="${exercise.id}"]`) as HTMLTextAreaElement;
+                            if (textarea) {
+                              const start = textarea.selectionStart;
+                              const end = textarea.selectionEnd;
+                              const currentValue = userAnswers[exercise.id] || '';
+                              const newValue = currentValue.slice(0, start) + symbol + currentValue.slice(end);
+                              handleAnswerChange(exercise.id, newValue);
+                              // Restore cursor position after the inserted symbol
+                              setTimeout(() => {
+                                textarea.focus();
+                                textarea.setSelectionRange(start + symbol.length, start + symbol.length);
+                              }, 0);
+                            }
+                          }}
+                          className="h-8 w-8 p-0 text-sm font-mono"
+                        >
+                          {symbol}
+                        </Button>
+                      ))}
+                    </div>
+                    <Textarea
+                      placeholder="Write your solution here..."
+                      value={userAnswers[exercise.id] || ''}
+                      onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
+                      className="min-h-20"
+                      data-exercise-id={exercise.id}
+                    />
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">
