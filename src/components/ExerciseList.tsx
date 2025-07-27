@@ -129,7 +129,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
             </div>
 
             {selectedExercise === exercise.id && (
-              <div className="space-y-4 border-t pt-4">
+              <div className="space-y-4 border-t pt-4" onClick={(e) => e.stopPropagation()}>
                 <div>
                   <label className="text-sm font-medium mb-2 block">Your Answer:</label>
                   <Textarea
@@ -144,7 +144,10 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => toggleShowAnswer(exercise.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleShowAnswer(exercise.id);
+                    }}
                     className="gap-2"
                   >
                     {showAnswers[exercise.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
