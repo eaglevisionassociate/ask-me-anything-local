@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ChatInterface } from "./ChatInterface";
 import { ExerciseList } from "./ExerciseList";
+import { LessonFlow } from "./LessonFlow";
 
 interface Subject {
   id: string;
@@ -61,7 +62,7 @@ export const TutorDashboard = () => {
       return; // Only Math is available
     }
     setSelectedSubject(subject);
-    setActiveTab("chat");
+    setActiveTab("lessons");
   };
 
   return (
@@ -101,7 +102,7 @@ export const TutorDashboard = () => {
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="subjects">Subjects</TabsTrigger>
-            <TabsTrigger value="exercises">Exercises</TabsTrigger>
+            <TabsTrigger value="lessons">Math Lessons</TabsTrigger>
             <TabsTrigger value="chat">AI Tutor Chat</TabsTrigger>
           </TabsList>
 
@@ -271,7 +272,7 @@ export const TutorDashboard = () => {
                       disabled={subject.id !== "math"}
                     >
                       <MessageCircle className="w-4 h-4 mr-2" />
-                      {subject.id === "math" ? "Study with AI" : "Coming Soon"}
+                      {subject.id === "math" ? "Start Learning" : "Coming Soon"}
                     </Button>
                   </CardContent>
                 </Card>
@@ -279,14 +280,8 @@ export const TutorDashboard = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="exercises" className="space-y-6">
-            <div className="mb-4">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Mathematics Exercises</h2>
-              <p className="text-muted-foreground">
-                Practice problems from your Supabase database. Work through them and use the AI tutor for help!
-              </p>
-            </div>
-            <ExerciseList />
+          <TabsContent value="lessons" className="space-y-6">
+            <LessonFlow topic="Algebra" />
           </TabsContent>
 
           <TabsContent value="chat" className="space-y-6">

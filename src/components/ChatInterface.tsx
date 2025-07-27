@@ -14,11 +14,31 @@ interface Subject {
   topics: string[];
 }
 
-interface ChatInterfaceProps {
-  tutorContext?: Subject | null;
+interface Lesson {
+  id: string;
+  title: string;
+  description?: string;
+  topic: string;
+  content?: string;
+  youtube_url?: string;
 }
 
-export const ChatInterface = ({ tutorContext }: ChatInterfaceProps) => {
+interface Exercise {
+  id: string;
+  question: string;
+  answer: string;
+  explanation?: string;
+  difficulty?: string;
+  lesson_id?: string;
+}
+
+interface ChatInterfaceProps {
+  tutorContext?: Subject | null;
+  lessonContext?: Lesson;
+  exercises?: Exercise[];
+}
+
+export const ChatInterface = ({ tutorContext, lessonContext, exercises }: ChatInterfaceProps) => {
   const {
     messages,
     sendMessage,
@@ -41,17 +61,45 @@ export const ChatInterface = ({ tutorContext }: ChatInterfaceProps) => {
     let contextualMessage = content;
     
     if (tutorContext && tutorContext.id === "math") {
-      contextualMessage = `As a Grade 8 Mathematics AI tutor, please help with this: ${content}
+      let mathContext = `As a Grade 8 Mathematics AI tutor, please help with this: ${content}
 
-Context: I'm a Grade 8 student studying Mathematics topics including ${tutorContext.topics.join(', ')}.
+Context: I'm a Grade 8 student studying Mathematics topics including ${tutorContext.topics.join(', ')}.`;
+
+      if (lessonContext) {
+        mathContext += `
+
+Current lesson: ${lessonContext.title}
+Topic: ${lessonContext.topic}
+Description: ${lessonContext.description || 'No description'}`;
+      }
+
+      if (exercises && exercises.length > 0) {
+        mathContext += `
+
+Available practice exercises:`;
+        exercises.forEach((exercise, index) => {
+          mathContext += `
+${index + 1}. ${exercise.question}
+   Correct answer: ${exercise.answer}`;
+          if (exercise.explanation) {
+            mathContext += `
+   Explanation: ${exercise.explanation}`;
+          }
+        });
+      }
+
+      mathContext += `
 
 Your capabilities include:
 1. Correcting student exercises and providing detailed explanations
 2. Creating new practice exercises when requested
 3. Explaining mathematical concepts step-by-step
 4. Providing hints and guidance for problem-solving
+5. Helping with specific exercises from the lesson
 
-Please provide educational, age-appropriate explanations that would help a Grade 8 student understand mathematical concepts better. If the student asks for exercises, generate appropriate Grade 8 level problems with solutions.`;
+Please provide educational, age-appropriate explanations that would help a Grade 8 student understand mathematical concepts better. If the student is asking about a specific exercise, provide detailed corrections and step-by-step explanations.`;
+
+      contextualMessage = mathContext;
     } else if (tutorContext) {
       contextualMessage = `As a Grade 8 ${tutorContext.name} tutor, please help with this question: ${content}. 
       
