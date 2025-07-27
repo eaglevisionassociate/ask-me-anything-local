@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Book, Calculator, Beaker, Globe, Brain, MessageCircle, Star, Trophy, User, Settings } from "lucide-react";
+import { Book, Calculator, Beaker, Globe, Brain, MessageCircle, Star, Trophy, User, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -8,6 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { ChatInterface } from "./ChatInterface";
 import { ExerciseList } from "./ExerciseList";
 import { LessonFlow } from "./LessonFlow";
+import { useAuth } from "@/hooks/useAuth";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { useToast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Subject {
   id: string;
@@ -56,6 +60,20 @@ const subjects: Subject[] = [
 export const TutorDashboard = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+  const { user, signOut } = useAuth();
+  const { profile, userStats, subjectProgress, recentActivities, loading } = useDashboardData(user?.id);
+  const { toast } = useToast();
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleSubjectSelect = (subject: Subject) => {
     if (subject.id !== "math") {
@@ -63,6 +81,24 @@ export const TutorDashboard = () => {
     }
     setSelectedSubject(subject);
     setActiveTab("lessons");
+  };
+
+  // Get real subject progress data
+  const getSubjectProgress = () => {
+    return subjects.map(subject => {
+      const progress = subjectProgress.find(p => p.subject_name === subject.name);
+      return {
+        ...subject,
+        progress: progress?.progress_percentage || 0
+      };
+    });
+  };
+
+  // Calculate overall progress
+  const calculateOverallProgress = () => {
+    if (subjectProgress.length === 0) return 0;
+    const total = subjectProgress.reduce((sum, p) => sum + p.progress_percentage, 0);
+    return Math.round(total / subjectProgress.length);
   };
 
   return (
@@ -83,14 +119,16 @@ export const TutorDashboard = () => {
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-yellow-500" />
-                <span className="font-semibold">1,250 XP</span>
+                <span className="font-semibold">
+                  {loading ? <Skeleton className="h-4 w-16" /> : `${profile?.total_xp || 0} XP`}
+                </span>
               </div>
-              <Button variant="ghost" size="sm">
-                <User className="w-4 h-4 mr-2" />
-                Profile
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Settings className="w-4 h-4" />
+              <div className="text-sm text-muted-foreground">
+                {loading ? <Skeleton className="h-4 w-20" /> : `Welcome, ${profile?.display_name || 'Student'}!`}
+              </div>
+              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
               </Button>
             </div>
           </div>
@@ -114,8 +152,10 @@ export const TutorDashboard = () => {
                   <Trophy className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">72%</div>
-                  <p className="text-xs text-muted-foreground">+5% from last week</p>
+                  <div className="text-2xl font-bold">
+                    {loading ? <Skeleton className="h-8 w-16" /> : `${calculateOverallProgress()}%`}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Across all subjects</p>
                 </CardContent>
               </Card>
               
@@ -125,8 +165,10 @@ export const TutorDashboard = () => {
                   <Book className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">28</div>
-                  <p className="text-xs text-muted-foreground">This month</p>
+                  <div className="text-2xl font-bold">
+                    {loading ? <Skeleton className="h-8 w-12" /> : userStats?.total_lessons_completed || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Total completed</p>
                 </CardContent>
               </Card>
               
@@ -136,7 +178,9 @@ export const TutorDashboard = () => {
                   <Star className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">7 days</div>
+                  <div className="text-2xl font-bold">
+                    {loading ? <Skeleton className="h-8 w-12" /> : `${profile?.study_streak || 0} days`}
+                  </div>
                   <p className="text-xs text-muted-foreground">Keep it up!</p>
                 </CardContent>
               </Card>
@@ -147,8 +191,10 @@ export const TutorDashboard = () => {
                   <MessageCircle className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">15</div>
-                  <p className="text-xs text-muted-foreground">This week</p>
+                  <div className="text-2xl font-bold">
+                    {loading ? <Skeleton className="h-8 w-12" /> : userStats?.ai_sessions_count || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Total sessions</p>
                 </CardContent>
               </Card>
             </div>
@@ -160,18 +206,30 @@ export const TutorDashboard = () => {
                   <CardDescription>Your progress across all subjects</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  {subjects.map((subject) => (
-                    <div key={subject.id} className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <subject.icon className="w-4 h-4" />
-                          <span className="text-sm font-medium">{subject.name}</span>
+                  {loading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                      <div key={i} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-4 w-8" />
                         </div>
-                        <span className="text-sm text-muted-foreground">{subject.progress}%</span>
+                        <Skeleton className="h-2 w-full" />
                       </div>
-                      <Progress value={subject.progress} className="h-2" />
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    getSubjectProgress().map((subject) => (
+                      <div key={subject.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <subject.icon className="w-4 h-4" />
+                            <span className="text-sm font-medium">{subject.name}</span>
+                          </div>
+                          <span className="text-sm text-muted-foreground">{subject.progress}%</span>
+                        </div>
+                        <Progress value={subject.progress} className="h-2" />
+                      </div>
+                    ))
+                  )}
                 </CardContent>
               </Card>
 
@@ -181,38 +239,53 @@ export const TutorDashboard = () => {
                   <CardDescription>Your latest learning activities</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Calculator className="w-4 h-4 text-blue-600" />
+                  {loading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <Skeleton className="w-8 h-8 rounded-full" />
+                        <div className="flex-1 space-y-1">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                        <Skeleton className="h-5 w-12" />
+                      </div>
+                    ))
+                  ) : recentActivities.length > 0 ? (
+                    recentActivities.slice(0, 5).map((activity) => {
+                      const getActivityIcon = (type: string) => {
+                        switch (type) {
+                          case 'exercise': return Calculator;
+                          case 'lesson': return Book;
+                          case 'chat': return MessageCircle;
+                          default: return Brain;
+                        }
+                      };
+                      
+                      const ActivityIcon = getActivityIcon(activity.activity_type);
+                      const timeAgo = new Date(activity.created_at).toLocaleDateString();
+                      
+                      return (
+                        <div key={activity.id} className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
+                            <ActivityIcon className="w-4 h-4 text-primary" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{activity.activity_title}</p>
+                            <p className="text-xs text-muted-foreground">{timeAgo}</p>
+                          </div>
+                          {activity.score && (
+                            <Badge variant="secondary">{activity.score}%</Badge>
+                          )}
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="text-center text-muted-foreground py-4">
+                      <Brain className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No activities yet</p>
+                      <p className="text-xs">Start learning to see your progress here!</p>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Completed Algebra Quiz</p>
-                      <p className="text-xs text-muted-foreground">2 hours ago</p>
-                    </div>
-                    <Badge variant="secondary">95%</Badge>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                      <Beaker className="w-4 h-4 text-green-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Chemistry Lab Session</p>
-                      <p className="text-xs text-muted-foreground">Yesterday</p>
-                    </div>
-                    <Badge variant="secondary">88%</Badge>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                      <Book className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">Essay Writing Practice</p>
-                      <p className="text-xs text-muted-foreground">2 days ago</p>
-                    </div>
-                    <Badge variant="secondary">92%</Badge>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </div>
