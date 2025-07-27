@@ -100,6 +100,8 @@ export type Database = {
           display_name: string | null
           grade: number | null
           id: string
+          study_streak: number | null
+          total_xp: number | null
           updated_at: string
           user_id: string
         }
@@ -108,6 +110,8 @@ export type Database = {
           display_name?: string | null
           grade?: number | null
           id?: string
+          study_streak?: number | null
+          total_xp?: number | null
           updated_at?: string
           user_id: string
         }
@@ -116,6 +120,65 @@ export type Database = {
           display_name?: string | null
           grade?: number | null
           id?: string
+          study_streak?: number | null
+          total_xp?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      recent_activities: {
+        Row: {
+          activity_title: string
+          activity_type: string
+          created_at: string
+          id: string
+          score: number | null
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_title: string
+          activity_type: string
+          created_at?: string
+          id?: string
+          score?: number | null
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_title?: string
+          activity_type?: string
+          created_at?: string
+          id?: string
+          score?: number | null
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subject_progress: {
+        Row: {
+          created_at: string
+          id: string
+          progress_percentage: number | null
+          subject_name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          progress_percentage?: number | null
+          subject_name: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          progress_percentage?: number | null
+          subject_name?: string
           updated_at?: string
           user_id?: string
         }
@@ -208,6 +271,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_stats: {
+        Row: {
+          ai_sessions_count: number | null
+          created_at: string
+          id: string
+          last_activity_date: string | null
+          total_exercises_completed: number | null
+          total_lessons_completed: number | null
+          updated_at: string
+          user_id: string
+          weekly_ai_sessions: number | null
+          weekly_lessons: number | null
+        }
+        Insert: {
+          ai_sessions_count?: number | null
+          created_at?: string
+          id?: string
+          last_activity_date?: string | null
+          total_exercises_completed?: number | null
+          total_lessons_completed?: number | null
+          updated_at?: string
+          user_id: string
+          weekly_ai_sessions?: number | null
+          weekly_lessons?: number | null
+        }
+        Update: {
+          ai_sessions_count?: number | null
+          created_at?: string
+          id?: string
+          last_activity_date?: string | null
+          total_exercises_completed?: number | null
+          total_lessons_completed?: number | null
+          updated_at?: string
+          user_id?: string
+          weekly_ai_sessions?: number | null
+          weekly_lessons?: number | null
+        }
+        Relationships: []
       }
     }
     Views: {
