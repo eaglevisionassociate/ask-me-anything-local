@@ -50,7 +50,24 @@ export const useGenerateExercise = () => {
         }
       }
 
-      const prompt = `Generate ${params.count || 1} Grade 8 mathematics exercise(s) for the topic: ${params.topic || 'general mathematics'}.
+      // Math subjects for Grade 8
+      const mathSubjects = [
+        'Algebra (linear equations, inequalities, graphing)',
+        'Geometry (angles, triangles, area, perimeter)',
+        'Fractions and Decimals (operations, conversions)',
+        'Integers (positive and negative numbers)',
+        'Ratios and Proportions',
+        'Percentages and Interest',
+        'Statistics and Probability',
+        'Exponents and Scientific Notation',
+        'Coordinate Geometry',
+        'Functions and Relations'
+      ];
+      
+      // Randomly select a subject if no specific topic is provided
+      const selectedTopic = params.topic || mathSubjects[Math.floor(Math.random() * mathSubjects.length)];
+
+      const prompt = `Generate ${params.count || 1} Grade 8 mathematics exercise(s) for the topic: ${selectedTopic}.
 
 ${lessonContext}
 
@@ -60,6 +77,7 @@ For each exercise, provide:
 1. A clear, age-appropriate question suitable for Grade 8 students
 2. The correct answer
 3. A detailed step-by-step explanation
+4. Make the questions diverse and engaging within the selected topic
 
 Format your response as a JSON array with objects containing:
 {
@@ -69,7 +87,7 @@ Format your response as a JSON array with objects containing:
   "difficulty": "${params.difficulty || 'medium'}"
 }
 
-Make sure the questions are educational, engaging, and appropriate for Grade 8 mathematics level. ONLY respond with valid JSON.`;
+Make sure the questions are educational, engaging, and appropriate for Grade 8 mathematics level. Vary the question types (word problems, calculations, conceptual questions) within the topic. ONLY respond with valid JSON.`;
 
       const response = await window.puter.ai.chat(prompt, {
         model: 'claude-sonnet-4',

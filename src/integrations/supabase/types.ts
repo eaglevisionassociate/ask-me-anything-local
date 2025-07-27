@@ -14,7 +14,201 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      exercises: {
+        Row: {
+          answer: string
+          created_at: string
+          difficulty: string | null
+          explanation: string | null
+          id: string
+          lesson_id: string
+          order_index: number
+          question: string
+        }
+        Insert: {
+          answer: string
+          created_at?: string
+          difficulty?: string | null
+          explanation?: string | null
+          id?: string
+          lesson_id: string
+          order_index?: number
+          question: string
+        }
+        Update: {
+          answer?: string
+          created_at?: string
+          difficulty?: string | null
+          explanation?: string | null
+          id?: string
+          lesson_id?: string
+          order_index?: number
+          question?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercises_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          content: string | null
+          created_at: string
+          description: string | null
+          grade: number
+          id: string
+          order_index: number
+          title: string
+          topic: string
+          updated_at: string
+          youtube_url: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          grade?: number
+          id?: string
+          order_index?: number
+          title: string
+          topic: string
+          updated_at?: string
+          youtube_url?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string
+          description?: string | null
+          grade?: number
+          id?: string
+          order_index?: number
+          title?: string
+          topic?: string
+          updated_at?: string
+          youtube_url?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          grade: number | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          grade?: number | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          grade?: number | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      submissions: {
+        Row: {
+          ai_feedback: string | null
+          created_at: string
+          exercise_id: string
+          id: string
+          score: number | null
+          status: string | null
+          submission_text: string | null
+          submission_type: string
+          submission_url: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_feedback?: string | null
+          created_at?: string
+          exercise_id: string
+          id?: string
+          score?: number | null
+          status?: string | null
+          submission_text?: string | null
+          submission_type: string
+          submission_url?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_feedback?: string | null
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          score?: number | null
+          status?: string | null
+          submission_text?: string | null
+          submission_type?: string
+          submission_url?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          lesson_id: string
+          progress_percentage: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lesson_id: string
+          progress_percentage?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lesson_id?: string
+          progress_percentage?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
