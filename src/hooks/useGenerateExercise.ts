@@ -1,11 +1,6 @@
 import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-
-const SUPABASE_URL = "https://yejsacotkqcatdfrqksn.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InllanNhY290a3FjYXRkZnJxa3NuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM1NTgxMjUsImV4cCI6MjA2OTEzNDEyNX0.WE4EsZmSJ4Qn-4Cy1boAjnfpg76sQePBLD-OkjYDE4A";
-
-const supabaseClient = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
 
 interface GenerateExerciseParams {
   lessonId?: string;
@@ -44,7 +39,7 @@ export const useGenerateExercise = () => {
       // Get lesson context if lessonId is provided
       let lessonContext = '';
       if (params.lessonId) {
-        const { data: lesson } = await supabaseClient
+        const { data: lesson } = await (supabase as any)
           .from('lessons')
           .select('title, description, topic, content')
           .eq('id', params.lessonId)
@@ -92,10 +87,18 @@ Make sure the questions are educational, engaging, and appropriate for Grade 8 m
         aiResponse = JSON.stringify(response);
       }
 
-      // Parse the generated exercises
+      // Clean markdown code blocks and parse the generated exercises
       let exercises;
       try {
-        exercises = JSON.parse(aiResponse);
+        // Remove markdown code blocks if present
+        let cleanResponse = aiResponse.trim();
+        if (cleanResponse.startsWith('```json')) {
+          cleanResponse = cleanResponse.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        } else if (cleanResponse.startsWith('```')) {
+          cleanResponse = cleanResponse.replace(/^```\s*/, '').replace(/\s*```$/, '');
+        }
+        
+        exercises = JSON.parse(cleanResponse);
         if (!Array.isArray(exercises)) {
           exercises = [exercises];
         }
@@ -118,7 +121,7 @@ Make sure the questions are educational, engaging, and appropriate for Grade 8 m
         lesson_id: params.lessonId || null,
       }));
 
-      const { data: insertedExercises, error } = await supabaseClient
+      const { data: insertedExercises, error } = await (supabase as any)
         .from('exercises')
         .insert(exercisesToInsert)
         .select();
