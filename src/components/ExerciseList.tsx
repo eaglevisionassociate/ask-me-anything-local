@@ -19,6 +19,8 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
   const [showAnswers, setShowAnswers] = useState<{ [key: string]: boolean }>({});
+  const [submittedAnswers, setSubmittedAnswers] = useState<{ [key: string]: boolean }>({});
+  const [answerFeedback, setAnswerFeedback] = useState<{ [key: string]: { isCorrect: boolean; feedback: string } }>({});
 
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(selectedExercise === exercise.id ? null : exercise.id);
@@ -29,6 +31,41 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     setUserAnswers(prev => ({
       ...prev,
       [exerciseId]: answer
+    }));
+  };
+
+  const handleSubmitAnswer = async (exerciseId: string) => {
+    const userAnswer = userAnswers[exerciseId]?.trim();
+    if (!userAnswer) return;
+
+    const exercise = exercises.find(e => e.id === exerciseId);
+    if (!exercise) return;
+
+    // Simple answer checking - you can enhance this with AI
+    const correctAnswer = exercise.answer.trim().toLowerCase();
+    const submittedAnswer = userAnswer.toLowerCase();
+    
+    const isCorrect = correctAnswer === submittedAnswer || 
+                     correctAnswer.includes(submittedAnswer) ||
+                     submittedAnswer.includes(correctAnswer);
+
+    setSubmittedAnswers(prev => ({
+      ...prev,
+      [exerciseId]: true
+    }));
+
+    setAnswerFeedback(prev => ({
+      ...prev,
+      [exerciseId]: {
+        isCorrect,
+        feedback: isCorrect ? "Correct! Well done!" : "Not quite right. Try again or check the answer below."
+      }
+    }));
+
+    // Auto-show answer after submission
+    setShowAnswers(prev => ({
+      ...prev,
+      [exerciseId]: true
     }));
   };
 
@@ -203,19 +240,51 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleShowAnswer(exercise.id);
-                    }}
-                    className="gap-2"
-                  >
-                    {showAnswers[exercise.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    {showAnswers[exercise.id] ? 'Hide Answer' : 'Show Answer'}
-                  </Button>
+                  {!submittedAnswers[exercise.id] ? (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSubmitAnswer(exercise.id);
+                      }}
+                      disabled={!userAnswers[exercise.id]?.trim()}
+                      size="sm"
+                      className="gap-2"
+                    >
+                      <CheckCircle className="w-4 h-4" />
+                      Submit Answer
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleShowAnswer(exercise.id);
+                      }}
+                      className="gap-2"
+                    >
+                      {showAnswers[exercise.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showAnswers[exercise.id] ? 'Hide Answer' : 'Show Answer'}
+                    </Button>
+                  )}
                 </div>
+
+                {answerFeedback[exercise.id] && (
+                  <div className={`p-3 rounded-lg border ${
+                    answerFeedback[exercise.id].isCorrect 
+                      ? 'bg-green-50 border-green-200 text-green-800' 
+                      : 'bg-red-50 border-red-200 text-red-800'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      {answerFeedback[exercise.id].isCorrect ? (
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-red-600" />
+                      )}
+                      <p className="text-sm font-medium">{answerFeedback[exercise.id].feedback}</p>
+                    </div>
+                  </div>
+                )}
 
                 {showAnswers[exercise.id] && (
                   <div className="bg-muted p-4 rounded-lg space-y-2">
