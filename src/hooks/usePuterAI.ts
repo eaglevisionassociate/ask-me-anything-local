@@ -1,27 +1,40 @@
 import { useState, useCallback } from 'react';
 
+interface Exercise {
+  question: string;
+  answer: string;
+  explanation?: string;
+}
+
 interface Message {
   id: string;
-  content: string;
+  content: string | Exercise[];
   isUser: boolean;
   timestamp: Date;
+  isExercise?: boolean;
 }
 
 interface AIChatResponse {
   message?: {
     content?: Array<{
       text?: string;
+      exercises?: Exercise[];
     }>;
   };
   text?: string;
-  [key: string]: any; // For other potential response properties
+  exercises?: Exercise[];
+  [key: string]: any;
 }
 
 declare global {
   interface Window {
     puter: {
       ai: {
-        chat: (message: string, options?: { model?: string; stream?: boolean }) => Promise<AIChatResponse | string>;
+        chat: (message: string, options?: { 
+          model?: string; 
+          stream?: boolean;
+          format?: 'exercises' | 'text';
+        }) => Promise<AIChatResponse | string>;
       };
     };
   }
@@ -33,36 +46,82 @@ export const usePuterAI = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedModel, setSelectedModel] = useState<'claude-sonnet-4' | 'claude-opus-4'>('claude-sonnet-4');
 
-  const generateResponse = useCallback(async (userMessage: string) => {
+  const parseAIResponse = (response: AIChatResponse | string): string | Exercise[] => {
+    try {
+      // If the response is a string, try to parse it as JSON
+      if (typeof response === 'string') {
+        try {
+          const parsed = JSON.parse(response);
+          if (Array.isArray(parsed) && parsed.every(ex => ex.question && ex.answer)) {
+            return parsed as Exercise[];
+          }
+          return response;
+        } catch {
+          return response;
+        }
+      }
+
+      // Check for exercises in different response formats
+      if (Array.isArray(response.exercises)) {
+        return response.exercises;
+      }
+
+      if (response.message?.content?.[0]?.exercises) {
+        return response.message.content[0].exercises;
+      }
+
+      if (response.message?.content?.[0]?.text) {
+        const text = response.message.content[0].text;
+        try {
+          const parsed = JSON.parse(text);
+          if (Array.isArray(parsed) && parsed.every(ex => ex.question && ex.answer)) {
+            return parsed as Exercise[];
+          }
+        } catch {
+          return text;
+        }
+        return text;
+      }
+
+      if (response.text) {
+        return response.text;
+      }
+
+      return "Sorry, I couldn't generate the requested content. Please try again.";
+    } catch (error) {
+      console.error('Error parsing AI response:', error);
+      return "An error occurred while processing the response.";
+    }
+  };
+
+  const generateExercises = useCallback(async (subject: string, difficulty: string, count: number = 5): Promise<Exercise[] | string> => {
     if (!window.puter) {
-      throw new Error('AI not loaded. Please refresh the page.');
+      throw new Error('Puter.js not loaded. Please refresh the page.');
     }
 
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await window.puter.ai.chat(userMessage, {
+      const prompt = `Generate ${count} ${difficulty}-level ${subject} exercises. 
+      Format each exercise as JSON with "question", "answer", and optional "explanation" fields.
+      Return only the JSON array, no additional text or markdown.`;
+
+      const response = await window.puter.ai.chat(prompt, {
         model: selectedModel,
+        format: 'exercises'
       });
 
-      // Handle different response formats more robustly
-      if (typeof response === 'string') {
-        return response;
-      } else if (response?.message?.content?.[0]?.text) {
-        return response.message.content[0].text;
-      } else if (response?.text) {
-        return response.text;
-      } else if (response?.choices?.[0]?.message?.content) {
-        // Handle another possible response format
-        return response.choices[0].message.content;
+      const result = parseAIResponse(response);
+      
+      if (Array.isArray(result)) {
+        return result;
       } else {
-        // Fallback - stringify the response if it's an object
-        return typeof response === 'object' ? JSON.stringify(response) : String(response);
+        throw new Error('Failed to generate exercises in the correct format');
       }
     } catch (error) {
-      console.error('Error generating response:', error);
-      setError('Failed to generate response. Please try again.');
+      console.error('Error generating exercises:', error);
+      setError('Failed to generate exercises. Please try again.');
       throw error;
     } finally {
       setIsLoading(false);
@@ -92,17 +151,42 @@ export const usePuterAI = () => {
       };
 
       setMessages(prev => [...prev, aiMessage]);
+      return aiMessage;
     } catch (error) {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: error instanceof Error ? error.message : 'Sorry, I encountered an error while processing your request. Please try again.',
+        content: error instanceof Error ? error.message : 'Sorry, I encountered an error. Please try again.',
         isUser: false,
         timestamp: new Date(),
       };
 
       setMessages(prev => [...prev, errorMessage]);
+      throw error;
     }
   }, [generateResponse]);
+
+  const generateResponse = useCallback(async (userMessage: string): Promise<string | Exercise[]> => {
+    if (!window.puter) {
+      throw new Error('Puter.js not loaded. Please refresh the page.');
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await window.puter.ai.chat(userMessage, {
+        model: selectedModel,
+      });
+
+      return parseAIResponse(response);
+    } catch (error) {
+      console.error('Error generating response:', error);
+      setError('Failed to generate response. Please try again.');
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedModel]);
 
   const clearChat = useCallback(() => {
     setMessages([]);
@@ -120,6 +204,7 @@ export const usePuterAI = () => {
   return {
     messages,
     sendMessage,
+    generateExercises,
     clearChat,
     isLoading,
     error,
