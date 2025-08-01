@@ -36,10 +36,8 @@ export const useGenerateExercise = () => {
     setIsGenerating(true);
     
     try {
-      // Get lesson context and existing exercises to avoid duplicates
+      // Get lesson context if lessonId is provided
       let lessonContext = '';
-      let existingQuestions = '';
-      
       if (params.lessonId) {
         const { data: lesson } = await (supabase as any)
           .from('lessons')
@@ -50,17 +48,6 @@ export const useGenerateExercise = () => {
         if (lesson) {
           lessonContext = `Lesson: ${lesson.title}\nTopic: ${lesson.topic}\nDescription: ${lesson.description || ''}\n`;
         }
-      }
-
-      // Get existing exercises to avoid duplicates
-      const { data: existingExercises } = await (supabase as any)
-        .from('exercises')
-        .select('question')
-        .eq('lesson_id', params.lessonId || null)
-        .limit(20);
-
-      if (existingExercises && existingExercises.length > 0) {
-        existingQuestions = `\nEXISTING QUESTIONS TO AVOID DUPLICATING:\n${existingExercises.map((e: any, i: number) => `${i + 1}. ${e.question}`).join('\n')}\n`;
       }
 
       // Math subjects for Grade 8
@@ -82,18 +69,15 @@ export const useGenerateExercise = () => {
 
       const prompt = `Generate ${params.count || 1} Grade 8 mathematics exercise(s) for the topic: ${selectedTopic}.
 
-${lessonContext}${existingQuestions}
+${lessonContext}
 
 Difficulty level: ${params.difficulty || 'medium'}
-
-IMPORTANT: Create NEW and UNIQUE questions that are different from any existing questions listed above. Do not duplicate or create similar variations of existing questions.
 
 For each exercise, provide:
 1. A clear, age-appropriate question suitable for Grade 8 students
 2. The correct answer
 3. A detailed step-by-step explanation
 4. Make the questions diverse and engaging within the selected topic
-5. Ensure each question is completely different from existing ones
 
 Format your response as a JSON array with objects containing:
 {
@@ -103,7 +87,7 @@ Format your response as a JSON array with objects containing:
   "difficulty": "${params.difficulty || 'medium'}"
 }
 
-Make sure the questions are educational, engaging, and appropriate for Grade 8 mathematics level. Vary the question types (word problems, calculations, conceptual questions) within the topic. Create questions that explore different aspects and scenarios of the topic. ONLY respond with valid JSON.`;
+Make sure the questions are educational, engaging, and appropriate for Grade 8 mathematics level. Vary the question types (word problems, calculations, conceptual questions) within the topic. ONLY respond with valid JSON.`;
 
       const response = await window.puter.ai.chat(prompt, {
         model: 'claude-sonnet-4',
