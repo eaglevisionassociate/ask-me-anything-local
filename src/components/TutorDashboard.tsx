@@ -124,7 +124,7 @@ export const TutorDashboard = () => {
                 </span>
               </div>
               <div className="text-sm text-muted-foreground">
-                {loading ? <Skeleton className="h-4 w-20" /> : `Welcome, Student!`}
+                {loading ? <Skeleton className="h-4 w-20" /> : `Welcome, ${profile?.display_name || 'Student'}!`}
               </div>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="w-4 h-4 mr-2" />
