@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Play, BookOpen, Brain, CheckCircle, ArrowRight, Youtube } from 'lucide-react';
 import { useLessons, Lesson } from '@/hooks/useLessons';
 import { useExercises } from '@/hooks/useExercises';
+import { useUserProgress } from '@/hooks/useUserProgress';
 import { ExerciseList } from '@/components/ExerciseList';
 import { ChatInterface } from '@/components/ChatInterface';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -23,6 +24,7 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
   const [completedSteps, setCompletedSteps] = useState<FlowStep[]>([]);
 
   const { exercises } = useExercises(selectedLesson?.id);
+  const { progress, updateProgress } = useUserProgress(selectedLesson?.id);
 
   const handleLessonSelect = (lesson: Lesson) => {
     setSelectedLesson(lesson);
@@ -30,21 +32,39 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
     setCompletedSteps([]);
   };
 
-  const handleStepComplete = (step: FlowStep) => {
+  // Update completed steps based on user progress
+  useEffect(() => {
+    if (progress) {
+      const steps: FlowStep[] = [];
+      if (progress.video_watched) steps.push('video');
+      if (progress.exercises_completed > 0) steps.push('exercises');
+      if (progress.ai_help_used) steps.push('ai-help');
+      setCompletedSteps(steps);
+    }
+  }, [progress]);
+
+  const handleStepComplete = async (step: FlowStep) => {
     if (!completedSteps.includes(step)) {
       setCompletedSteps([...completedSteps, step]);
+      // Only update progress for actual lesson steps (not lesson-list)
+      if (step !== 'lesson-list') {
+        await updateProgress(step as 'video' | 'exercises' | 'ai-help');
+      }
     }
   };
 
   const getStepProgress = () => {
-    const totalSteps = 3; // video, exercises, ai-help
-    return (completedSteps.length / totalSteps) * 100;
+    return progress?.progress_percentage || 0;
   };
 
   const openYouTubeVideo = (url: string) => {
     window.open(url, '_blank');
     handleStepComplete('video');
   };
+
+  // Check if user can access exercises (either video completed OR previously watched video for this lesson)
+  const canAccessExercises = completedSteps.includes('video') || (progress?.video_watched ?? false);
+  const canAccessAIHelp = canAccessExercises;
 
   if (loading) {
     return (
@@ -155,7 +175,7 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
         <Button
           variant={currentStep === 'exercises' ? 'default' : completedSteps.includes('exercises') ? 'outline' : 'ghost'}
           onClick={() => setCurrentStep('exercises')}
-          disabled={!completedSteps.includes('video')}
+          disabled={!canAccessExercises}
           className="gap-2"
         >
           {completedSteps.includes('exercises') ? <CheckCircle className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
@@ -165,7 +185,7 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
         <Button
           variant={currentStep === 'ai-help' ? 'default' : 'ghost'}
           onClick={() => setCurrentStep('ai-help')}
-          disabled={!completedSteps.includes('video')}
+          disabled={!canAccessAIHelp}
           className="gap-2"
         >
           <Brain className="w-4 h-4" />
