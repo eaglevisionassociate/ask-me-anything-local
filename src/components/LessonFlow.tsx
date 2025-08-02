@@ -155,7 +155,6 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
         <Button
           variant={currentStep === 'exercises' ? 'default' : completedSteps.includes('exercises') ? 'outline' : 'ghost'}
           onClick={() => setCurrentStep('exercises')}
-          disabled={!completedSteps.includes('video')}
           className="gap-2"
         >
           {completedSteps.includes('exercises') ? <CheckCircle className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
@@ -165,7 +164,6 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
         <Button
           variant={currentStep === 'ai-help' ? 'default' : 'ghost'}
           onClick={() => setCurrentStep('ai-help')}
-          disabled={!completedSteps.includes('video')}
           className="gap-2"
         >
           <Brain className="w-4 h-4" />
@@ -242,13 +240,28 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
           </CardHeader>
           <CardContent>
             <ExerciseList lessonId={selectedLesson.id} />
-            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800 mb-2">
-                📚 Need help with any exercise? Use the AI Tutor to get detailed explanations and corrections!
-              </p>
-              <Button size="sm" onClick={() => setCurrentStep('ai-help')} variant="outline">
-                Get AI Help →
-              </Button>
+            <div className="mt-6 space-y-4">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800 mb-2">
+                  📚 Need help with any exercise? Use the AI Tutor to get detailed explanations and corrections!
+                </p>
+                <Button size="sm" onClick={() => setCurrentStep('ai-help')} variant="outline">
+                  Get AI Help →
+                </Button>
+              </div>
+              
+              <div className="flex items-center justify-center">
+                <Button 
+                  onClick={() => {
+                    handleStepComplete('exercises');
+                    setCurrentStep('ai-help');
+                  }}
+                  className="gap-2"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Mark Exercises Complete
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

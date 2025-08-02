@@ -41,9 +41,12 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     const exercise = exercises.find(e => e.id === exerciseId);
     if (!exercise) return;
 
-    // Simple answer checking - you can enhance this with AI
-    const correctAnswer = exercise.answer.trim().toLowerCase();
-    const submittedAnswer = userAnswer.toLowerCase();
+    // Enhanced answer checking - ignores spaces and case sensitivity
+    const normalizeAnswer = (answer: string) => 
+      answer.trim().toLowerCase().replace(/\s+/g, '');
+    
+    const correctAnswer = normalizeAnswer(exercise.answer);
+    const submittedAnswer = normalizeAnswer(userAnswer);
     
     const isCorrect = correctAnswer === submittedAnswer || 
                      correctAnswer.includes(submittedAnswer) ||
@@ -281,7 +284,11 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                       ) : (
                         <XCircle className="w-4 h-4 text-red-600" />
                       )}
-                      <p className="text-sm font-medium">{answerFeedback[exercise.id].feedback}</p>
+                      <p className="text-sm font-medium">
+                        {answerFeedback[exercise.id].isCorrect 
+                          ? "🎉 Excellent work! You got it right!" 
+                          : answerFeedback[exercise.id].feedback}
+                      </p>
                     </div>
                   </div>
                 )}
