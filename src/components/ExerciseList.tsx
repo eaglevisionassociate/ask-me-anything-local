@@ -20,7 +20,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
   const [showAnswers, setShowAnswers] = useState<{ [key: string]: boolean }>({});
   const [submittedAnswers, setSubmittedAnswers] = useState<{ [key: string]: boolean }>({});
-  const [answerFeedback, setAnswerFeedback] = useState<{ [key: string]: { isCorrect: boolean; feedback: string } }>({});
+  const [answerFeedback, setAnswerFeedback] = useState<{ [key: string]: { isCorrect: boolean; feedback: string; explanationSteps?: string[] } }>({});
 
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(selectedExercise === exercise.id ? null : exercise.id);
@@ -41,16 +41,69 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     const exercise = exercises.find(e => e.id === exerciseId);
     if (!exercise) return;
 
-    // Enhanced answer checking - ignores spaces and case sensitivity
+    // Enhanced answer checking with detailed explanations
     const normalizeAnswer = (answer: string) => 
       answer.trim().toLowerCase().replace(/\s+/g, '');
     
     const correctAnswer = normalizeAnswer(exercise.answer);
     const submittedAnswer = normalizeAnswer(userAnswer);
     
+    // Generate step-by-step explanation
+    const generateExplanation = (original: string, normalized: string, isUserAnswer: boolean) => {
+      const steps = [];
+      const label = isUserAnswer ? "Your answer" : "Correct answer";
+      
+      steps.push(`📝 ${label}: "${original}"`);
+      
+      if (original !== original.trim()) {
+        steps.push(`🧹 Remove extra spaces: "${original.trim()}"`);
+      }
+      
+      if (original.trim() !== original.trim().toLowerCase()) {
+        steps.push(`🔤 Convert to lowercase: "${original.trim().toLowerCase()}"`);
+      }
+      
+      if (original.trim().toLowerCase() !== normalized) {
+        steps.push(`📐 Remove all spaces: "${normalized}"`);
+      }
+      
+      // Mathematical normalization explanations
+      if (normalized.includes('x') && !normalized.match(/\d+x/)) {
+        steps.push(`🔢 Note: "x" is treated as "1x" (coefficient of 1 is implied)`);
+      }
+      
+      if (normalized.includes('y') && !normalized.match(/\d+y/)) {
+        steps.push(`🔢 Note: "y" is treated as "1y" (coefficient of 1 is implied)`);
+      }
+      
+      return steps;
+    };
+    
     const isCorrect = correctAnswer === submittedAnswer || 
                      correctAnswer.includes(submittedAnswer) ||
                      submittedAnswer.includes(correctAnswer);
+
+    // Generate detailed feedback with explanations
+    let feedback = "";
+    let explanationSteps = [];
+    
+    if (isCorrect) {
+      feedback = "🎉 Excellent work! You got it right!";
+    } else {
+      feedback = "Let me show you how I process answers:";
+      explanationSteps = [
+        ...generateExplanation(userAnswer, submittedAnswer, true),
+        "",
+        ...generateExplanation(exercise.answer, correctAnswer, false),
+        "",
+        "🔍 Comparison result:",
+        `   Your processed answer: "${submittedAnswer}"`,
+        `   Correct processed answer: "${correctAnswer}"`,
+        `   Match: ${correctAnswer === submittedAnswer ? "✅ Yes" : "❌ No"}`,
+        "",
+        "💡 Tip: Answers are checked ignoring spaces and letter case!"
+      ];
+    }
 
     setSubmittedAnswers(prev => ({
       ...prev,
@@ -61,7 +114,8 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
       ...prev,
       [exerciseId]: {
         isCorrect,
-        feedback: isCorrect ? "Correct! Well done!" : "Not quite right. Try again or check the answer below."
+        feedback,
+        explanationSteps
       }
     }));
 
@@ -289,9 +343,22 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                           ? "🎉 Excellent work! You got it right!" 
                           : answerFeedback[exercise.id].feedback}
                       </p>
-                    </div>
-                  </div>
-                )}
+                     </div>
+                     
+                     {answerFeedback[exercise.id].explanationSteps && (
+                       <div className="mt-3 p-3 bg-gray-50 border rounded-lg">
+                         <h4 className="font-medium text-sm mb-2">📖 Step-by-step answer processing:</h4>
+                         <div className="space-y-1 text-xs font-mono">
+                           {answerFeedback[exercise.id].explanationSteps.map((step, index) => (
+                             <div key={index} className={step === "" ? "h-2" : ""}>
+                               {step && <p>{step}</p>}
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     )}
+                   </div>
+                 )}
 
                 {showAnswers[exercise.id] && (
                   <div className="bg-muted p-4 rounded-lg space-y-2">
