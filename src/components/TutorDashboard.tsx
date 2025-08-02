@@ -29,7 +29,7 @@ const subjects: Subject[] = [
     icon: Calculator,
     progress: 75,
     color: "bg-primary",
-    topics: ["Algebra", "Linear Equations", "Geometry", "Number Theory"]
+    topics: ["Algebra", "Geometry", "Number Theory"]
   },
   {
     id: "science",
@@ -104,48 +104,48 @@ export const TutorDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-3 md:py-4">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-8 h-8 md:w-10 md:h-10 bg-primary rounded-xl flex items-center justify-center">
-                <Brain className="w-4 h-4 md:w-6 md:h-6 text-primary-foreground" />
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
+                <Brain className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-lg md:text-2xl font-bold text-foreground">Grade 8 AI Tutor</h1>
-                <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Your personalized learning companion</p>
+                <h1 className="text-2xl font-bold text-foreground">Grade 8 AI Tutor</h1>
+                <p className="text-sm text-muted-foreground">Your personalized learning companion</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-2 md:gap-4">
-              <div className="flex items-center gap-1 md:gap-2">
-                <Trophy className="w-4 h-4 md:w-5 md:h-5 text-yellow-500" />
-                <span className="text-sm md:text-base font-semibold">
-                  {loading ? <Skeleton className="h-4 w-12 md:w-16" /> : `${profile?.total_xp || 0} XP`}
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                <span className="font-semibold">
+                  {loading ? <Skeleton className="h-4 w-16" /> : `${profile?.total_xp || 0} XP`}
                 </span>
               </div>
-              <div className="text-xs md:text-sm text-muted-foreground hidden lg:block">
+              <div className="text-sm text-muted-foreground">
                 {loading ? <Skeleton className="h-4 w-20" /> : `Welcome, ${profile?.display_name || user?.email || 'Student'}!`}
               </div>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
-                <span className="hidden sm:inline">Sign Out</span>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-4 md:py-6">
+      <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="dashboard" className="text-xs md:text-sm">Dashboard</TabsTrigger>
-            <TabsTrigger value="subjects" className="text-xs md:text-sm">Subjects</TabsTrigger>
-            <TabsTrigger value="lessons" className="text-xs md:text-sm">Math Lessons</TabsTrigger>
-            <TabsTrigger value="chat" className="text-xs md:text-sm">AI Chat</TabsTrigger>
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="subjects">Subjects</TabsTrigger>
+            <TabsTrigger value="lessons">Math Lessons</TabsTrigger>
+            <TabsTrigger value="chat">AI Tutor Chat</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="dashboard" className="space-y-4 md:space-y-6">
-            <div className="grid gap-4 md:gap-6 grid-cols-2 lg:grid-cols-4">
+          <TabsContent value="dashboard" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total Progress</CardTitle>
@@ -199,7 +199,7 @@ export const TutorDashboard = () => {
               </Card>
             </div>
 
-            <div className="grid gap-4 md:gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2">
               <Card>
                 <CardHeader>
                   <CardTitle>Subject Progress</CardTitle>
@@ -291,14 +291,14 @@ export const TutorDashboard = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="subjects" className="space-y-4 md:space-y-6">
-            <div className="mb-4 p-3 md:p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-xs md:text-sm font-medium text-yellow-800">
+          <TabsContent value="subjects" className="space-y-6">
+            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-sm font-medium text-yellow-800">
                 🚧 Currently focused on Mathematics. Other subjects are under development and will be available soon!
               </p>
             </div>
             
-            <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               {subjects.map((subject) => (
                 <Card 
                   key={subject.id} 
@@ -309,28 +309,28 @@ export const TutorDashboard = () => {
                   }`} 
                   onClick={() => handleSubjectSelect(subject)}
                 >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center gap-2 md:gap-3">
-                      <div className={`w-10 h-10 md:w-12 md:h-12 ${subject.color} rounded-xl flex items-center justify-center`}>
-                        <subject.icon className={`w-5 h-5 md:w-6 md:h-6 ${subject.id === "math" ? "text-white" : "text-muted-foreground"}`} />
+                  <CardHeader>
+                    <div className="flex items-center gap-3">
+                      <div className={`w-12 h-12 ${subject.color} rounded-xl flex items-center justify-center`}>
+                        <subject.icon className={`w-6 h-6 ${subject.id === "math" ? "text-white" : "text-muted-foreground"}`} />
                       </div>
                       <div className="flex-1">
-                        <CardTitle className="text-base md:text-lg flex items-center gap-2">
+                        <CardTitle className="text-lg flex items-center gap-2">
                           {subject.name}
                           {subject.id !== "math" && (
                             <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
                           )}
                         </CardTitle>
-                        <CardDescription className="text-xs md:text-sm">
+                        <CardDescription>
                           {subject.id === "math" ? `${subject.progress}% Complete` : "Under Development"}
                         </CardDescription>
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="pt-3">
-                    <Progress value={subject.progress} className="mb-3 md:mb-4" />
+                  <CardContent>
+                    <Progress value={subject.progress} className="mb-4" />
                     <div className="space-y-2">
-                      <p className="text-xs md:text-sm font-medium text-muted-foreground mb-2">Topics:</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Topics:</p>
                       <div className="flex flex-wrap gap-1">
                         {subject.topics.map((topic) => (
                           <Badge key={topic} variant="outline" className="text-xs">
@@ -340,12 +340,11 @@ export const TutorDashboard = () => {
                       </div>
                     </div>
                     <Button 
-                      className="w-full mt-3 md:mt-4 text-sm" 
+                      className="w-full mt-4" 
                       onClick={() => handleSubjectSelect(subject)}
                       disabled={subject.id !== "math"}
-                      size="sm"
                     >
-                      <MessageCircle className="w-3 h-3 md:w-4 md:h-4 mr-1 md:mr-2" />
+                      <MessageCircle className="w-4 h-4 mr-2" />
                       {subject.id === "math" ? "Start Learning" : "Coming Soon"}
                     </Button>
                   </CardContent>
@@ -354,27 +353,27 @@ export const TutorDashboard = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="lessons" className="space-y-4 md:space-y-6">
-            <LessonFlow topic="Linear Equations" />
+          <TabsContent value="lessons" className="space-y-6">
+            <LessonFlow topic="Algebra" />
           </TabsContent>
 
-          <TabsContent value="chat" className="space-y-4 md:space-y-6">
+          <TabsContent value="chat" className="space-y-6">
             {selectedSubject && (
               <Card className="mb-4">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-2 md:gap-3">
-                    <div className={`w-8 h-8 md:w-10 md:h-10 ${selectedSubject.color} rounded-xl flex items-center justify-center`}>
-                      <selectedSubject.icon className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 ${selectedSubject.color} rounded-xl flex items-center justify-center`}>
+                      <selectedSubject.icon className="w-5 h-5 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-base md:text-lg">{selectedSubject.name} AI Tutor</CardTitle>
-                      <CardDescription className="text-xs md:text-sm">Ask questions about {selectedSubject.name} topics</CardDescription>
+                      <CardTitle>{selectedSubject.name} AI Tutor</CardTitle>
+                      <CardDescription>Ask questions about {selectedSubject.name} topics</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
               </Card>
             )}
-            <div className="h-[calc(100vh-280px)] md:h-[calc(100vh-300px)]">
+            <div className="h-[calc(100vh-300px)]">
               <ChatInterface tutorContext={selectedSubject} />
             </div>
           </TabsContent>
