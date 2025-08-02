@@ -66,45 +66,45 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
 
   if (currentStep === 'lesson-list') {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 md:space-y-6">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Mathematics Lessons</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl md:text-2xl font-bold mb-2">Mathematics Lessons</h2>
+          <p className="text-sm md:text-base text-muted-foreground">
             Choose a lesson to start your learning journey: Watch → Practice → Get Help
           </p>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           {lessons.map((lesson) => (
             <Card key={lesson.id} className="cursor-pointer hover:shadow-md transition-shadow">
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">{lesson.title}</CardTitle>
-                  <Badge variant="outline">{lesson.topic}</Badge>
+                  <CardTitle className="text-base md:text-lg">{lesson.title}</CardTitle>
+                  <Badge variant="outline" className="text-xs">{lesson.topic}</Badge>
                 </div>
-                <CardDescription>{lesson.description}</CardDescription>
+                <CardDescription className="text-xs md:text-sm">{lesson.description}</CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CardContent className="pt-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-xs md:text-sm text-muted-foreground">
                     {lesson.youtube_url && (
                       <div className="flex items-center gap-1">
-                        <Youtube className="w-4 h-4" />
-                        <span>Video</span>
+                        <Youtube className="w-3 h-3 md:w-4 md:h-4" />
+                        <span className="hidden sm:inline">Video</span>
                       </div>
                     )}
                     <div className="flex items-center gap-1">
-                      <BookOpen className="w-4 h-4" />
-                      <span>Exercises</span>
+                      <BookOpen className="w-3 h-3 md:w-4 md:h-4" />
+                      <span className="hidden sm:inline">Exercises</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Brain className="w-4 h-4" />
-                      <span>AI Help</span>
+                      <Brain className="w-3 h-3 md:w-4 md:h-4" />
+                      <span className="hidden sm:inline">AI Help</span>
                     </div>
                   </div>
-                  <Button onClick={() => handleLessonSelect(lesson)}>
-                    Start Learning
-                    <ArrowRight className="w-4 h-4 ml-2" />
+                  <Button onClick={() => handleLessonSelect(lesson)} size="sm" className="w-full sm:w-auto">
+                    <span className="text-xs md:text-sm">Start Learning</span>
+                    <ArrowRight className="w-3 h-3 md:w-4 md:h-4 ml-1 md:ml-2" />
                   </Button>
                 </div>
               </CardContent>
@@ -118,16 +118,16 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
   if (!selectedLesson) return null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Lesson Header */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
+        <CardHeader className="pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <CardTitle className="text-xl">{selectedLesson.title}</CardTitle>
-              <CardDescription>{selectedLesson.description}</CardDescription>
+              <CardTitle className="text-lg md:text-xl">{selectedLesson.title}</CardTitle>
+              <CardDescription className="text-xs md:text-sm">{selectedLesson.description}</CardDescription>
             </div>
-            <Button variant="outline" onClick={() => setCurrentStep('lesson-list')}>
+            <Button variant="outline" onClick={() => setCurrentStep('lesson-list')} size="sm" className="w-full sm:w-auto">
               ← Back to Lessons
             </Button>
           </div>
@@ -142,32 +142,35 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
       </Card>
 
       {/* Navigation Steps */}
-      <div className="flex items-center gap-4 p-4 bg-muted rounded-lg">
+      <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 p-3 md:p-4 bg-muted rounded-lg">
         <Button
           variant={currentStep === 'video' ? 'default' : completedSteps.includes('video') ? 'outline' : 'ghost'}
           onClick={() => setCurrentStep('video')}
-          className="gap-2"
+          className="gap-1 md:gap-2 w-full sm:w-auto"
+          size="sm"
         >
-          {completedSteps.includes('video') ? <CheckCircle className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          1. Watch Video
+          {completedSteps.includes('video') ? <CheckCircle className="w-3 h-3 md:w-4 md:h-4" /> : <Play className="w-3 h-3 md:w-4 md:h-4" />}
+          <span className="text-xs md:text-sm">1. Watch Video</span>
         </Button>
-        <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        <ArrowRight className="w-3 h-3 md:w-4 md:h-4 text-muted-foreground hidden sm:block rotate-90 sm:rotate-0" />
         <Button
           variant={currentStep === 'exercises' ? 'default' : completedSteps.includes('exercises') ? 'outline' : 'ghost'}
           onClick={() => setCurrentStep('exercises')}
-          className="gap-2"
+          className="gap-1 md:gap-2 w-full sm:w-auto"
+          size="sm"
         >
-          {completedSteps.includes('exercises') ? <CheckCircle className="w-4 h-4" /> : <BookOpen className="w-4 h-4" />}
-          2. Practice
+          {completedSteps.includes('exercises') ? <CheckCircle className="w-3 h-3 md:w-4 md:h-4" /> : <BookOpen className="w-3 h-3 md:w-4 md:h-4" />}
+          <span className="text-xs md:text-sm">2. Practice</span>
         </Button>
-        <ArrowRight className="w-4 h-4 text-muted-foreground" />
+        <ArrowRight className="w-3 h-3 md:w-4 md:h-4 text-muted-foreground hidden sm:block rotate-90 sm:rotate-0" />
         <Button
           variant={currentStep === 'ai-help' ? 'default' : 'ghost'}
           onClick={() => setCurrentStep('ai-help')}
-          className="gap-2"
+          className="gap-1 md:gap-2 w-full sm:w-auto"
+          size="sm"
         >
-          <Brain className="w-4 h-4" />
-          3. Get Help
+          <Brain className="w-3 h-3 md:w-4 md:h-4" />
+          <span className="text-xs md:text-sm">3. Get Help</span>
         </Button>
       </div>
 
@@ -279,7 +282,7 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[600px]">
+            <div className="h-[400px] md:h-[600px]">
               <ChatInterface 
                 tutorContext={{
                   id: 'math',
