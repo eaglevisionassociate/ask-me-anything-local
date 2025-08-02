@@ -29,7 +29,7 @@ const subjects: Subject[] = [
     icon: Calculator,
     progress: 75,
     color: "bg-primary",
-    topics: ["Algebra", "Geometry", "Statistics", "Probability"]
+    topics: ["Algebra", "Geometry", "Number Theory"]
   },
   {
     id: "science",
