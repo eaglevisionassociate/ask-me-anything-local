@@ -20,19 +20,30 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
   const { lessons, loading } = useLessons(topic);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [currentStep, setCurrentStep] = useState<FlowStep>('lesson-list');
-  const [completedSteps, setCompletedSteps] = useState<FlowStep[]>([]);
+  const [lessonProgress, setLessonProgress] = useState<Record<string, FlowStep[]>>({});
 
   const { exercises } = useExercises(selectedLesson?.id);
 
+  const completedSteps = selectedLesson ? lessonProgress[selectedLesson.id] || [] : [];
+
   const handleLessonSelect = (lesson: Lesson) => {
     setSelectedLesson(lesson);
-    setCurrentStep('video');
-    setCompletedSteps([]);
+    const lessonCompletedSteps = lessonProgress[lesson.id] || [];
+    
+    // If video is already completed, go directly to exercises
+    if (lessonCompletedSteps.includes('video')) {
+      setCurrentStep('exercises');
+    } else {
+      setCurrentStep('video');
+    }
   };
 
   const handleStepComplete = (step: FlowStep) => {
-    if (!completedSteps.includes(step)) {
-      setCompletedSteps([...completedSteps, step]);
+    if (selectedLesson && !completedSteps.includes(step)) {
+      setLessonProgress(prev => ({
+        ...prev,
+        [selectedLesson.id]: [...(prev[selectedLesson.id] || []), step]
+      }));
     }
   };
 
