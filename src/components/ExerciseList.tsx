@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { useExercises, Exercise } from '@/hooks/useExercises';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
+import { useActivityTracking } from '@/hooks/useActivityTracking';
 import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -16,6 +17,7 @@ interface ExerciseListProps {
 export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) => {
   const { exercises, loading, error, refetch } = useExercises(lessonId);
   const { generateExercise, isGenerating } = useGenerateExercise();
+  const { completeExercise } = useActivityTracking();
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
   const [showAnswers, setShowAnswers] = useState<{ [key: string]: boolean }>({});
@@ -118,6 +120,14 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
         explanationSteps
       }
     }));
+
+    // Track the exercise completion
+    const score = isCorrect ? 100 : 0;
+    await completeExercise(
+      `${exercise.question.substring(0, 30)}...`,
+      score,
+      'Mathematics'
+    );
 
     // Auto-show answer after submission
     setShowAnswers(prev => ({

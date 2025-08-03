@@ -3,6 +3,7 @@ import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { TypingIndicator } from "./TypingIndicator";
 import { usePuterAI } from "@/hooks/usePuterAI";
+import { useActivityTracking } from "@/hooks/useActivityTracking";
 import { Button } from "@/components/ui/button";
 import { Trash2, Brain, Settings } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -49,6 +50,8 @@ export const ChatInterface = ({ tutorContext, lessonContext, exercises }: ChatIn
     isPuterReady,
   } = usePuterAI();
   
+  const { startAISession } = useActivityTracking();
+  
   const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,6 +61,12 @@ export const ChatInterface = ({ tutorContext, lessonContext, exercises }: ChatIn
   }, [messages, isLoading]);
 
   const handleSendMessage = (content: string) => {
+    // Track AI session when user starts chatting
+    if (messages.length === 0) {
+      const topic = lessonContext?.title || tutorContext?.name || 'General';
+      startAISession(topic);
+    }
+    
     let contextualMessage = content;
     
     if (tutorContext && tutorContext.id === "math") {

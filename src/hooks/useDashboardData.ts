@@ -58,6 +58,55 @@ export const useDashboardData = (userId: string | undefined) => {
     }
 
     fetchDashboardData();
+
+    // Set up real-time subscriptions for live updates
+    const channels = [
+      supabase
+        .channel('user-stats-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'user_stats',
+            filter: `user_id=eq.${userId}`
+          },
+          () => fetchDashboardData()
+        )
+        .subscribe(),
+      
+      supabase
+        .channel('subject-progress-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'subject_progress',
+            filter: `user_id=eq.${userId}`
+          },
+          () => fetchDashboardData()
+        )
+        .subscribe(),
+      
+      supabase
+        .channel('recent-activities-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'recent_activities',
+            filter: `user_id=eq.${userId}`
+          },
+          () => fetchDashboardData()
+        )
+        .subscribe()
+    ];
+
+    return () => {
+      channels.forEach(channel => supabase.removeChannel(channel));
+    };
   }, [userId]);
 
   const fetchDashboardData = async () => {

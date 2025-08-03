@@ -6,6 +6,7 @@ import { Progress } from '@/components/ui/progress';
 import { Play, BookOpen, Brain, CheckCircle, ArrowRight, Youtube } from 'lucide-react';
 import { useLessons, Lesson } from '@/hooks/useLessons';
 import { useExercises } from '@/hooks/useExercises';
+import { useActivityTracking } from '@/hooks/useActivityTracking';
 import { ExerciseList } from '@/components/ExerciseList';
 import { ChatInterface } from '@/components/ChatInterface';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,6 +22,7 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
   const [selectedLesson, setSelectedLesson] = useState<Lesson | null>(null);
   const [currentStep, setCurrentStep] = useState<FlowStep>('lesson-list');
   const [lessonProgress, setLessonProgress] = useState<Record<string, FlowStep[]>>({});
+  const { completeLesson } = useActivityTracking();
 
   const { exercises } = useExercises(selectedLesson?.id);
 
@@ -266,6 +268,9 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
                   onClick={() => {
                     handleStepComplete('exercises');
                     setCurrentStep('ai-help');
+                    if (selectedLesson) {
+                      completeLesson(selectedLesson.title, selectedLesson.topic);
+                    }
                   }}
                   className="gap-2"
                 >
