@@ -354,7 +354,45 @@ export const TutorDashboard = () => {
           </TabsContent>
 
           <TabsContent value="lessons" className="space-y-6">
-            <LessonFlow topic="Algebra" />
+            {/* Topic Selector */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Select a Topic</CardTitle>
+                <CardDescription>Choose from available mathematics topics</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 md:grid-cols-3">
+                  {["Algebra", "Geometry", "Number Theory"].map((topic) => (
+                    <Button
+                      key={topic}
+                      variant={selectedSubject?.topics.includes(topic) ? "default" : "outline"}
+                      onClick={() => {
+                        const mathSubject = subjects.find(s => s.id === "math");
+                        if (mathSubject) {
+                          setSelectedSubject({
+                            ...mathSubject,
+                            topics: [topic] // Set single topic for filtering
+                          });
+                        }
+                      }}
+                    >
+                      {topic}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+            
+            {selectedSubject && selectedSubject.topics.length === 1 ? (
+              <LessonFlow topic={selectedSubject.topics[0]} />
+            ) : (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <Calculator className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  <p className="text-muted-foreground">Select a topic above to view lessons</p>
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           <TabsContent value="chat" className="space-y-6">
