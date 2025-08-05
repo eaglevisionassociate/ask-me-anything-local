@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useExercises, Exercise } from '@/hooks/useExercises';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
-import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus } from 'lucide-react';
+import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface ExerciseListProps {
@@ -156,6 +156,68 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     }
   };
 
+  const handleResetExercises = () => {
+    setSelectedExercise(null);
+    setUserAnswers({});
+    setShowAnswers({});
+    setSubmittedAnswers({});
+    setAnswerFeedback({});
+  };
+
+  const handlePrintExercises = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Math Exercises - Print</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+            .header { border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 20px; }
+            .exercise { margin-bottom: 30px; border: 1px solid #ddd; padding: 15px; border-radius: 5px; }
+            .question { font-weight: bold; margin-bottom: 10px; }
+            .answer-space { border-bottom: 1px solid #999; min-height: 60px; margin: 15px 0; }
+            .difficulty { background: #f0f0f0; padding: 2px 8px; border-radius: 3px; font-size: 12px; }
+            .explanation { background: #f9f9f9; padding: 10px; margin-top: 10px; border-left: 3px solid #ccc; }
+            @media print { body { margin: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Math Exercises</h1>
+            <p>Total Problems: ${exercises.length}</p>
+            <p>Date: ${new Date().toLocaleDateString()}</p>
+          </div>
+          ${exercises.map((exercise, index) => `
+            <div class="exercise">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3>Problem ${index + 1}</h3>
+                ${exercise.difficulty ? `<span class="difficulty">${exercise.difficulty}</span>` : ''}
+              </div>
+              <div class="question">${exercise.question}</div>
+              <div class="answer-space">
+                <strong>Answer:</strong>
+              </div>
+              ${exercise.explanation ? `
+                <div class="explanation">
+                  <strong>Explanation:</strong><br>
+                  ${exercise.explanation}
+                </div>
+              ` : ''}
+            </div>
+          `).join('')}
+        </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  };
+
   const getDifficultyColor = (difficulty?: string) => {
     switch (difficulty?.toLowerCase()) {
       case 'easy':
@@ -220,6 +282,24 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
         <h3 className="text-lg font-semibold">Math Exercises</h3>
         <div className="flex items-center gap-2">
           <Badge variant="outline">{exercises.length} problems</Badge>
+          <Button
+            onClick={handlePrintExercises}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Printer className="w-4 h-4" />
+            Print
+          </Button>
+          <Button
+            onClick={handleResetExercises}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset
+          </Button>
           <Button
             onClick={handleGenerateExercise}
             disabled={isGenerating}
