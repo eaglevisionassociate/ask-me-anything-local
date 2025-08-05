@@ -81,7 +81,7 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
     return (
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold mb-2">Mathematics Lessons</h2>
+          <h2 className="text-2xl font-bold mb-2">{topic} Lessons</h2>
           <p className="text-muted-foreground">
             Choose a lesson to start your learning journey: Watch → Practice → Get Help
           </p>

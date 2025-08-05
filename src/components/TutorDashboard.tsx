@@ -36,8 +36,8 @@ const subjects: Subject[] = [
     name: "Science",
     icon: Beaker,
     progress: 0,
-    color: "bg-muted",
-    topics: ["Physics", "Chemistry", "Biology", "Environmental Science"]
+    color: "bg-green-600",
+    topics: ["Physical Sciences", "Life Sciences", "Earth Sciences"]
   },
   {
     id: "english",
@@ -76,8 +76,8 @@ export const TutorDashboard = () => {
   };
 
   const handleSubjectSelect = (subject: Subject) => {
-    if (subject.id !== "math") {
-      return; // Only Math is available
+    if (subject.id !== "math" && subject.id !== "science") {
+      return; // Only Math and Science are available
     }
     setSelectedSubject(subject);
     setActiveTab("lessons");
@@ -140,7 +140,7 @@ export const TutorDashboard = () => {
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="subjects">Subjects</TabsTrigger>
-            <TabsTrigger value="lessons">Math Lessons</TabsTrigger>
+            <TabsTrigger value="lessons">{selectedSubject?.name || "Math"} Lessons</TabsTrigger>
             <TabsTrigger value="chat">AI Tutor Chat</TabsTrigger>
           </TabsList>
 
@@ -292,9 +292,9 @@ export const TutorDashboard = () => {
           </TabsContent>
 
           <TabsContent value="subjects" className="space-y-6">
-            <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-              <p className="text-sm font-medium text-yellow-800">
-                🚧 Currently focused on Mathematics. Other subjects are under development and will be available soon!
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm font-medium text-blue-800">
+                📚 Mathematics and Science are available! English and Social Studies are under development.
               </p>
             </div>
             
@@ -303,26 +303,26 @@ export const TutorDashboard = () => {
                 <Card 
                   key={subject.id} 
                   className={`transition-shadow ${
-                    subject.id === "math" 
+                    (subject.id === "math" || subject.id === "science") 
                       ? "cursor-pointer hover:shadow-md" 
                       : "opacity-60 cursor-not-allowed"
-                  }`} 
+                  }`}
                   onClick={() => handleSubjectSelect(subject)}
                 >
                   <CardHeader>
                     <div className="flex items-center gap-3">
                       <div className={`w-12 h-12 ${subject.color} rounded-xl flex items-center justify-center`}>
-                        <subject.icon className={`w-6 h-6 ${subject.id === "math" ? "text-white" : "text-muted-foreground"}`} />
+                        <subject.icon className={`w-6 h-6 ${(subject.id === "math" || subject.id === "science") ? "text-white" : "text-muted-foreground"}`} />
                       </div>
                       <div className="flex-1">
                         <CardTitle className="text-lg flex items-center gap-2">
                           {subject.name}
-                          {subject.id !== "math" && (
+                          {(subject.id !== "math" && subject.id !== "science") && (
                             <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
                           )}
                         </CardTitle>
                         <CardDescription>
-                          {subject.id === "math" ? `${subject.progress}% Complete` : "Under Development"}
+                          {(subject.id === "math" || subject.id === "science") ? `${subject.progress}% Complete` : "Under Development"}
                         </CardDescription>
                       </div>
                     </div>
@@ -342,10 +342,10 @@ export const TutorDashboard = () => {
                     <Button 
                       className="w-full mt-4" 
                       onClick={() => handleSubjectSelect(subject)}
-                      disabled={subject.id !== "math"}
+                      disabled={subject.id !== "math" && subject.id !== "science"}
                     >
                       <MessageCircle className="w-4 h-4 mr-2" />
-                      {subject.id === "math" ? "Start Learning" : "Coming Soon"}
+                      {(subject.id === "math" || subject.id === "science") ? "Start Learning" : "Coming Soon"}
                     </Button>
                   </CardContent>
                 </Card>
@@ -358,19 +358,18 @@ export const TutorDashboard = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Select a Topic</CardTitle>
-                <CardDescription>Choose from available mathematics topics</CardDescription>
+                <CardDescription>Choose from available {selectedSubject?.name.toLowerCase()} topics</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid gap-3 md:grid-cols-3">
-                  {["Algebra", "Geometry", "Number Theory"].map((topic) => (
+                  {selectedSubject?.topics.map((topic) => (
                     <Button
                       key={topic}
-                      variant={selectedSubject?.topics.includes(topic) ? "default" : "outline"}
+                      variant={selectedSubject?.topics.length === 1 && selectedSubject.topics.includes(topic) ? "default" : "outline"}
                       onClick={() => {
-                        const mathSubject = subjects.find(s => s.id === "math");
-                        if (mathSubject) {
+                        if (selectedSubject) {
                           setSelectedSubject({
-                            ...mathSubject,
+                            ...selectedSubject,
                             topics: [topic] // Set single topic for filtering
                           });
                         }
