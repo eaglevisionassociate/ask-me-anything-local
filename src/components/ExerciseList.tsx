@@ -180,7 +180,6 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
             .question { font-weight: bold; margin-bottom: 10px; }
             .answer-space { border-bottom: 1px solid #999; min-height: 60px; margin: 15px 0; }
             .difficulty { background: #f0f0f0; padding: 2px 8px; border-radius: 3px; font-size: 12px; }
-            .explanation { background: #f9f9f9; padding: 10px; margin-top: 10px; border-left: 3px solid #ccc; }
             @media print { body { margin: 0; } }
           </style>
         </head>
@@ -200,12 +199,6 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
               <div class="answer-space">
                 <strong>Answer:</strong>
               </div>
-              ${exercise.explanation ? `
-                <div class="explanation">
-                  <strong>Explanation:</strong><br>
-                  ${exercise.explanation}
-                </div>
-              ` : ''}
             </div>
           `).join('')}
         </body>
