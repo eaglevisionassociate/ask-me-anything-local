@@ -8,6 +8,7 @@ import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
 import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { formatMathExpression } from '@/lib/fractionUtils';
 
 interface ExerciseListProps {
   lessonId?: string;
@@ -195,7 +196,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                 <h3>Problem ${index + 1}</h3>
                 ${exercise.difficulty ? `<span class="difficulty">${exercise.difficulty}</span>` : ''}
               </div>
-              <div class="question">${exercise.question}</div>
+              <div class="question">${formatMathExpression(exercise.question)}</div>
               <div class="answer-space">
                 <strong>Answer:</strong>
               </div>
@@ -332,7 +333,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
           
           <CardContent className="space-y-4">
             <div className="prose prose-sm max-w-none">
-              <p className="text-foreground whitespace-pre-wrap">{exercise.question}</p>
+              <p className="text-foreground whitespace-pre-wrap">{formatMathExpression(exercise.question)}</p>
             </div>
 
             {selectedExercise === exercise.id && (
@@ -341,7 +342,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                   <label className="text-sm font-medium mb-2 block">Your Answer:</label>
                   <div className="space-y-2">
                     <div className="flex flex-wrap gap-1 mb-2">
-                      {['∞', '√', '%', 'π', '∑', '∫', '(', ')', '[', ']', '≠', '≤', '≥', '±', '×', '÷'].map((symbol) => (
+                      {['∞', '√', '%', 'π', '∑', '∫', '(', ')', '[', ']', '≠', '≤', '≥', '±', '×', '÷', '½', '⅓', '⅔', '¼', '¾', '⅛', '⅜', '⅝', '⅞'].map((symbol) => (
                         <Button
                           key={symbol}
                           variant="outline"
@@ -447,14 +448,14 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                   <div className="bg-muted p-4 rounded-lg space-y-2">
                     <div>
                       <h4 className="font-medium text-sm mb-1">Correct Answer:</h4>
-                      <p className="text-sm whitespace-pre-wrap">{exercise.answer}</p>
+                      <p className="text-sm whitespace-pre-wrap">{formatMathExpression(exercise.answer)}</p>
                     </div>
                     
                     {exercise.explanation && (
                       <div>
                         <h4 className="font-medium text-sm mb-1">Explanation:</h4>
                         <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                          {exercise.explanation}
+                          {formatMathExpression(exercise.explanation)}
                         </p>
                       </div>
                     )}
