@@ -7,7 +7,7 @@ import { Play, BookOpen, Brain, CheckCircle, ArrowRight, Youtube } from 'lucide-
 import { useLessons, Lesson } from '@/hooks/useLessons';
 import { useExercises } from '@/hooks/useExercises';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
-import { ExerciseList } from '@/components/ExerciseList';
+import { ExerciseListMinimal as ExerciseList } from '@/components/ExerciseListMinimal';
 import { ChatInterface } from '@/components/ChatInterface';
 import { Skeleton } from '@/components/ui/skeleton';
 

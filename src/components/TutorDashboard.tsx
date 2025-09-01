@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { ChatInterface } from "./ChatInterface";
-import { ExerciseList } from "./ExerciseList";
+import { ExerciseListMinimal as ExerciseList } from "./ExerciseListMinimal";
 import { LessonFlow } from "./LessonFlow";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardData } from "@/hooks/useDashboardData";
