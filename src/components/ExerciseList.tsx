@@ -340,36 +340,324 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
               <div className="space-y-4 border-t pt-4" onClick={(e) => e.stopPropagation()}>
                 <div>
                   <label className="text-sm font-medium mb-2 block">Your Answer:</label>
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {['∞', '√', '%', 'π', '∑', '∫', '(', ')', '[', ']', '≠', '≤', '≥', '±', '×', '÷', '½', '⅓', '⅔', '¼', '¾', '⅛', '⅜', '⅝', '⅞'].map((symbol) => (
-                        <Button
-                          key={symbol}
-                          variant="outline"
-                          size="sm"
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const textarea = document.querySelector(`textarea[data-exercise-id="${exercise.id}"]`) as HTMLTextAreaElement;
-                            if (textarea) {
-                              const start = textarea.selectionStart;
-                              const end = textarea.selectionEnd;
-                              const currentValue = userAnswers[exercise.id] || '';
-                              const newValue = currentValue.slice(0, start) + symbol + currentValue.slice(end);
-                              handleAnswerChange(exercise.id, newValue);
-                              // Restore cursor position after the inserted symbol
-                              setTimeout(() => {
-                                textarea.focus();
-                                textarea.setSelectionRange(start + symbol.length, start + symbol.length);
-                              }, 0);
-                            }
-                          }}
-                          className="h-8 w-8 p-0 text-sm font-mono"
-                        >
-                          {symbol}
-                        </Button>
-                      ))}
+                  <div className="space-y-3">
+                    {/* Scientific Calculator Symbol Palette */}
+                    <div className="space-y-2">
+                      {/* Basic Operations */}
+                      <div className="flex flex-wrap gap-1">
+                        <span className="text-xs font-semibold text-muted-foreground px-2 py-1">Basic:</span>
+                        {['+', '−', '×', '÷', '=', '±', '|x|', '%', '‰'].map((symbol) => (
+                          <Button
+                            key={symbol}
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const textarea = document.querySelector(`textarea[data-exercise-id="${exercise.id}"]`) as HTMLTextAreaElement;
+                              if (textarea) {
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const currentValue = userAnswers[exercise.id] || '';
+                                const newValue = currentValue.slice(0, start) + symbol + currentValue.slice(end);
+                                handleAnswerChange(exercise.id, newValue);
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + symbol.length, start + symbol.length);
+                                }, 0);
+                              }
+                            }}
+                            className="h-8 min-w-8 px-2 text-sm font-mono"
+                          >
+                            {symbol}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* Parentheses & Brackets */}
+                      <div className="flex flex-wrap gap-1">
+                        <span className="text-xs font-semibold text-muted-foreground px-2 py-1">Brackets:</span>
+                        {['(', ')', '[', ']', '{', '}', '⌊', '⌋', '⌈', '⌉'].map((symbol) => (
+                          <Button
+                            key={symbol}
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const textarea = document.querySelector(`textarea[data-exercise-id="${exercise.id}"]`) as HTMLTextAreaElement;
+                              if (textarea) {
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const currentValue = userAnswers[exercise.id] || '';
+                                const newValue = currentValue.slice(0, start) + symbol + currentValue.slice(end);
+                                handleAnswerChange(exercise.id, newValue);
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + symbol.length, start + symbol.length);
+                                }, 0);
+                              }
+                            }}
+                            className="h-8 w-8 p-0 text-sm font-mono"
+                          >
+                            {symbol}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* Fractions */}
+                      <div className="flex flex-wrap gap-1">
+                        <span className="text-xs font-semibold text-muted-foreground px-2 py-1">Fractions:</span>
+                        {['½', '⅓', '⅔', '¼', '¾', '⅕', '⅖', '⅗', '⅘', '⅙', '⅚', '⅛', '⅜', '⅝', '⅞', '⅒'].map((symbol) => (
+                          <Button
+                            key={symbol}
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const textarea = document.querySelector(`textarea[data-exercise-id="${exercise.id}"]`) as HTMLTextAreaElement;
+                              if (textarea) {
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const currentValue = userAnswers[exercise.id] || '';
+                                const newValue = currentValue.slice(0, start) + symbol + currentValue.slice(end);
+                                handleAnswerChange(exercise.id, newValue);
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + symbol.length, start + symbol.length);
+                                }, 0);
+                              }
+                            }}
+                            className="h-8 w-8 p-0 text-sm font-mono"
+                          >
+                            {symbol}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* Powers & Roots */}
+                      <div className="flex flex-wrap gap-1">
+                        <span className="text-xs font-semibold text-muted-foreground px-2 py-1">Powers:</span>
+                        {['x²', 'x³', 'xⁿ', '√', '∛', '∜', '^', '₀', '₁', '₂', '₃', '₄', '₅', '₆', '₇', '₈', '₉'].map((symbol) => (
+                          <Button
+                            key={symbol}
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const textarea = document.querySelector(`textarea[data-exercise-id="${exercise.id}"]`) as HTMLTextAreaElement;
+                              if (textarea) {
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const currentValue = userAnswers[exercise.id] || '';
+                                let insertSymbol = symbol;
+                                if (symbol === 'x²') insertSymbol = '^2';
+                                if (symbol === 'x³') insertSymbol = '^3';
+                                if (symbol === 'xⁿ') insertSymbol = '^n';
+                                const newValue = currentValue.slice(0, start) + insertSymbol + currentValue.slice(end);
+                                handleAnswerChange(exercise.id, newValue);
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + insertSymbol.length, start + insertSymbol.length);
+                                }, 0);
+                              }
+                            }}
+                            className="h-8 min-w-8 px-2 text-sm font-mono"
+                          >
+                            {symbol}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* Trigonometry */}
+                      <div className="flex flex-wrap gap-1">
+                        <span className="text-xs font-semibold text-muted-foreground px-2 py-1">Trig:</span>
+                        {['sin', 'cos', 'tan', 'sin⁻¹', 'cos⁻¹', 'tan⁻¹', 'sec', 'csc', 'cot'].map((symbol) => (
+                          <Button
+                            key={symbol}
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const textarea = document.querySelector(`textarea[data-exercise-id="${exercise.id}"]`) as HTMLTextAreaElement;
+                              if (textarea) {
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const currentValue = userAnswers[exercise.id] || '';
+                                const newValue = currentValue.slice(0, start) + symbol + currentValue.slice(end);
+                                handleAnswerChange(exercise.id, newValue);
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + symbol.length, start + symbol.length);
+                                }, 0);
+                              }
+                            }}
+                            className="h-8 min-w-12 px-2 text-xs font-mono"
+                          >
+                            {symbol}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* Logarithms & Constants */}
+                      <div className="flex flex-wrap gap-1">
+                        <span className="text-xs font-semibold text-muted-foreground px-2 py-1">Log & Constants:</span>
+                        {['log', 'ln', 'log₁₀', 'e', 'π', '∞', 'i', 'j'].map((symbol) => (
+                          <Button
+                            key={symbol}
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const textarea = document.querySelector(`textarea[data-exercise-id="${exercise.id}"]`) as HTMLTextAreaElement;
+                              if (textarea) {
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const currentValue = userAnswers[exercise.id] || '';
+                                const newValue = currentValue.slice(0, start) + symbol + currentValue.slice(end);
+                                handleAnswerChange(exercise.id, newValue);
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + symbol.length, start + symbol.length);
+                                }, 0);
+                              }
+                            }}
+                            className="h-8 min-w-8 px-2 text-xs font-mono"
+                          >
+                            {symbol}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* Comparison & Logic */}
+                      <div className="flex flex-wrap gap-1">
+                        <span className="text-xs font-semibold text-muted-foreground px-2 py-1">Compare:</span>
+                        {['<', '>', '≤', '≥', '=', '≠', '≈', '≡', '∝', '∴', '∵'].map((symbol) => (
+                          <Button
+                            key={symbol}
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const textarea = document.querySelector(`textarea[data-exercise-id="${exercise.id}"]`) as HTMLTextAreaElement;
+                              if (textarea) {
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const currentValue = userAnswers[exercise.id] || '';
+                                const newValue = currentValue.slice(0, start) + symbol + currentValue.slice(end);
+                                handleAnswerChange(exercise.id, newValue);
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + symbol.length, start + symbol.length);
+                                }, 0);
+                              }
+                            }}
+                            className="h-8 w-8 p-0 text-sm font-mono"
+                          >
+                            {symbol}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* Calculus & Advanced */}
+                      <div className="flex flex-wrap gap-1">
+                        <span className="text-xs font-semibold text-muted-foreground px-2 py-1">Calculus:</span>
+                        {['∫', '∮', '∑', '∏', '∂', '∇', 'Δ', 'd/dx', 'lim', '→'].map((symbol) => (
+                          <Button
+                            key={symbol}
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const textarea = document.querySelector(`textarea[data-exercise-id="${exercise.id}"]`) as HTMLTextAreaElement;
+                              if (textarea) {
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const currentValue = userAnswers[exercise.id] || '';
+                                const newValue = currentValue.slice(0, start) + symbol + currentValue.slice(end);
+                                handleAnswerChange(exercise.id, newValue);
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + symbol.length, start + symbol.length);
+                                }, 0);
+                              }
+                            }}
+                            className="h-8 min-w-8 px-2 text-xs font-mono"
+                          >
+                            {symbol}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* Greek Letters */}
+                      <div className="flex flex-wrap gap-1">
+                        <span className="text-xs font-semibold text-muted-foreground px-2 py-1">Greek:</span>
+                        {['α', 'β', 'γ', 'δ', 'ε', 'ζ', 'η', 'θ', 'ι', 'κ', 'λ', 'μ', 'ν', 'ξ', 'ο', 'π', 'ρ', 'σ', 'τ', 'υ', 'φ', 'χ', 'ψ', 'ω'].map((symbol) => (
+                          <Button
+                            key={symbol}
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const textarea = document.querySelector(`textarea[data-exercise-id="${exercise.id}"]`) as HTMLTextAreaElement;
+                              if (textarea) {
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const currentValue = userAnswers[exercise.id] || '';
+                                const newValue = currentValue.slice(0, start) + symbol + currentValue.slice(end);
+                                handleAnswerChange(exercise.id, newValue);
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + symbol.length, start + symbol.length);
+                                }, 0);
+                              }
+                            }}
+                            className="h-8 w-8 p-0 text-sm font-mono"
+                          >
+                            {symbol}
+                          </Button>
+                        ))}
+                      </div>
+
+                      {/* Set Theory & Statistics */}
+                      <div className="flex flex-wrap gap-1">
+                        <span className="text-xs font-semibold text-muted-foreground px-2 py-1">Sets & Stats:</span>
+                        {['∈', '∉', '⊂', '⊃', '⊆', '⊇', '∪', '∩', '∅', 'n!', 'C', 'P', 'x̄', 'σ²', '°', '′', '″'].map((symbol) => (
+                          <Button
+                            key={symbol}
+                            variant="outline"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const textarea = document.querySelector(`textarea[data-exercise-id="${exercise.id}"]`) as HTMLTextAreaElement;
+                              if (textarea) {
+                                const start = textarea.selectionStart;
+                                const end = textarea.selectionEnd;
+                                const currentValue = userAnswers[exercise.id] || '';
+                                const newValue = currentValue.slice(0, start) + symbol + currentValue.slice(end);
+                                handleAnswerChange(exercise.id, newValue);
+                                setTimeout(() => {
+                                  textarea.focus();
+                                  textarea.setSelectionRange(start + symbol.length, start + symbol.length);
+                                }, 0);
+                              }
+                            }}
+                            className="h-8 min-w-8 px-2 text-xs font-mono"
+                          >
+                            {symbol}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
+
                     <Textarea
                       placeholder="Write your solution here..."
                       value={userAnswers[exercise.id] || ''}
