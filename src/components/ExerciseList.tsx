@@ -642,12 +642,21 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                      {/* Combined Answer Input - Only the textarea remains */}
                      <div className="space-y-2">
                        <div className="text-sm font-medium">Write your solution here:</div>
+                       <div className="min-h-32 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
+                         {userAnswers[exercise.id] ? (
+                           <div className="w-full">
+                             {renderMathExpression(userAnswers[exercise.id]) || userAnswers[exercise.id]}
+                           </div>
+                         ) : (
+                           <span className="text-muted-foreground">Type your answer here or use the tools above...</span>
+                         )}
+                       </div>
                        <Textarea
                          ref={textareaRef}
-                         placeholder="Type your answer here or use the fraction tools and operators above. Fractions will be rendered properly as you type."
+                         placeholder="Type your answer here or use the fraction tools and operators above. Fractions will be rendered properly above."
                          value={userAnswers[exercise.id] || ''}
                          onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
-                         className="min-h-32 font-mono text-lg"
+                         className="min-h-20 font-mono"
                          data-exercise-id={exercise.id}
                        />
                      </div>
