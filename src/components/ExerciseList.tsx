@@ -8,7 +8,7 @@ import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
 import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { renderMathExpression } from '@/components/ui/fraction';
+import { renderMathExpression, formatMathExpression } from '@/components/ui/fraction';
 
 interface ExerciseListProps {
   lessonId?: string;
@@ -266,14 +266,14 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                   <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
                     <div className="w-full">
                       {userAnswers[exercise.id]?.trim() ? (
-                        renderMathExpression(userAnswers[exercise.id])
+                        renderMathExpression(formatMathExpression(userAnswers[exercise.id]))
                       ) : (
                         <span className="text-muted-foreground">Your answer will appear here...</span>
                       )}
                     </div>
                   </div>
                   <Textarea
-                    placeholder="Write your solution here..."
+                    placeholder="Write your solution here (use a/b for fractions)..."
                     value={userAnswers[exercise.id] || ''}
                     onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
                     className="min-h-20 font-mono"
@@ -335,14 +335,14 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                     <div>
                       <h4 className="font-medium text-sm mb-1">Correct Answer:</h4>
                       <div className="text-lg whitespace-pre-wrap">
-                        {renderMathExpression(exercise.answer)}
+                        {renderMathExpression(formatMathExpression(exercise.answer))}
                       </div>
                     </div>
                     {exercise.explanation && (
                       <div>
                         <h4 className="font-medium text-sm mb-1">Explanation:</h4>
                         <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-                          {renderMathExpression(exercise.explanation)}
+                          {renderMathExpression(formatMathExpression(exercise.explanation))}
                         </div>
                       </div>
                     )}
