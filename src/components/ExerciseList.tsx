@@ -399,214 +399,65 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                 <div>
                   <label className="text-sm font-medium mb-2 block">Your Answer:</label>
                   <div className="space-y-2">
-                     {/* Scientific Calculator Layout */}
-                     <div className="grid grid-cols-8 gap-1 mb-4 p-3 bg-muted/50 rounded-lg">
-                       
-                       {/* Row 1: Numbers and basic operations */}
-                       <div className="col-span-8 text-xs font-medium mb-2 text-muted-foreground">Numbers & Basic Operations</div>
-                       {['7', '8', '9', '÷', '×', '(', ')', 'C'].map((symbol) => (
-                         <Button
-                           key={symbol}
-                           variant="outline"
-                           size="sm"
-                           type="button"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             if (symbol === 'C') {
-                               handleAnswerChange(exercise.id, '');
-                             } else {
-                               const currentAnswer = userAnswers[exercise.id] || '';
-                               handleAnswerChange(exercise.id, currentAnswer + symbol);
-                             }
-                           }}
-                           className="h-8 text-sm font-mono"
-                         >
-                           {symbol}
-                         </Button>
-                       ))}
-                       
-                       {['4', '5', '6', '+', '-', '[', ']', '⌫'].map((symbol) => (
-                         <Button
-                           key={symbol}
-                           variant="outline"
-                           size="sm"
-                           type="button"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             if (symbol === '⌫') {
-                               const currentAnswer = userAnswers[exercise.id] || '';
-                               handleAnswerChange(exercise.id, currentAnswer.slice(0, -1));
-                             } else {
-                               const currentAnswer = userAnswers[exercise.id] || '';
-                               handleAnswerChange(exercise.id, currentAnswer + symbol);
-                             }
-                           }}
-                           className="h-8 text-sm font-mono"
-                         >
-                           {symbol}
-                         </Button>
-                       ))}
-                       
-                       {['1', '2', '3', '=', '≠', '≤', '≥', '±'].map((symbol) => (
-                         <Button
-                           key={symbol}
-                           variant="outline"
-                           size="sm"
-                           type="button"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             const currentAnswer = userAnswers[exercise.id] || '';
-                             handleAnswerChange(exercise.id, currentAnswer + symbol);
-                           }}
-                           className="h-8 text-sm font-mono"
-                         >
-                           {symbol}
-                         </Button>
-                       ))}
-                       
-                       {['0', '.', '%', 'π', 'e', '∞', '√', 
-                         <Button
-                           key="frac"
-                           variant="outline"
-                           size="sm"
-                           type="button"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             toggleFractionEditor(exercise.id);
-                           }}
-                           className="h-8 px-1 text-xs"
-                         >
-                           a/b
-                         </Button>
-                       ].map((item, index) => (
-                         typeof item === 'string' ? (
-                           <Button
-                             key={item}
-                             variant="outline"
-                             size="sm"
-                             type="button"
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               const currentAnswer = userAnswers[exercise.id] || '';
-                               handleAnswerChange(exercise.id, currentAnswer + item);
-                             }}
-                             className="h-8 text-sm font-mono"
-                           >
-                             {item}
-                           </Button>
-                         ) : item
-                       ))}
-                       
-                       {/* Row: Functions */}
-                       <div className="col-span-8 text-xs font-medium mt-3 mb-2 text-muted-foreground">Functions & Constants</div>
-                       {['sin', 'cos', 'tan', 'log', 'ln', 'x²', '∑', '∫'].map((symbol) => (
-                         <Button
-                           key={symbol}
-                           variant="outline"
-                           size="sm"
-                           type="button"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             const currentAnswer = userAnswers[exercise.id] || '';
-                             if (symbol === 'x²') {
-                               handleAnswerChange(exercise.id, currentAnswer + '²');
-                             } else {
-                               handleAnswerChange(exercise.id, currentAnswer + symbol + '(');
-                             }
-                           }}
-                           className="h-8 text-xs font-mono px-1"
-                         >
-                           {symbol}
-                         </Button>
-                       ))}
-                       
-                       {/* Row: Common fractions */}
-                       <div className="col-span-8 text-xs font-medium mt-3 mb-2 text-muted-foreground">Common Fractions</div>
-                       <div className="col-span-8 flex flex-wrap gap-1">
-                         {['1/2', '1/3', '2/3', '1/4', '3/4', '1/5', '2/5', '3/5', '4/5', '1/6', '5/6', '1/8', '3/8', '5/8', '7/8'].map((fraction) => (
-                           <Button
-                             key={fraction}
-                             variant="outline"
-                             size="sm"
-                             type="button"
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               const [num, den] = fraction.split('/');
-                               const fractionText = `\\frac{${num}}{${den}}`;
-                               const currentAnswer = userAnswers[exercise.id] || '';
-                               handleAnswerChange(exercise.id, currentAnswer + fractionText);
-                             }}
-                             className="h-8 px-2 text-xs"
-                           >
-                             <Fraction numerator={fraction.split('/')[0]} denominator={fraction.split('/')[1]} />
-                           </Button>
-                         ))}
-                       </div>
-                     </div>
-                    
-                     {/* Custom Fraction Builder */}
-                     {fractionInput[exercise.id]?.isEditing && (
-                       <div className="p-4 bg-primary/5 border-2 border-primary/20 rounded-lg mb-4">
-                         <div className="text-sm font-medium mb-3">Create Custom Fraction</div>
-                         <div className="flex items-center justify-center gap-3 mb-4">
-                           <div className="text-center">
-                             <input
-                               type="text"
-                               placeholder="Numerator"
-                               value={fractionInput[exercise.id]?.numerator || ''}
-                               onChange={(e) => handleFractionInput(exercise.id, 'numerator', e.target.value)}
-                               className="w-20 h-10 text-center border-2 rounded font-mono text-lg"
-                               onClick={(e) => e.stopPropagation()}
-                             />
-                             <div className="h-0.5 bg-foreground mt-1"></div>
-                             <input
-                               type="text"
-                               placeholder="Denominator"
-                               value={fractionInput[exercise.id]?.denominator || ''}
-                               onChange={(e) => handleFractionInput(exercise.id, 'denominator', e.target.value)}
-                               className="w-20 h-10 text-center border-2 rounded font-mono text-lg"
-                               onClick={(e) => e.stopPropagation()}
-                             />
-                           </div>
-                           <div className="text-2xl text-muted-foreground">=</div>
-                           <div className="min-w-[40px] min-h-[40px] flex items-center justify-center bg-muted rounded border">
-                             {fractionInput[exercise.id]?.numerator && fractionInput[exercise.id]?.denominator ? (
-                               <Fraction 
-                                 numerator={fractionInput[exercise.id].numerator} 
-                                 denominator={fractionInput[exercise.id].denominator}
-                                 className="text-lg"
-                               />
-                             ) : (
-                               <span className="text-muted-foreground text-sm">Preview</span>
-                             )}
-                           </div>
-                         </div>
-                         <div className="flex gap-2 justify-center">
-                           <Button
-                             size="sm"
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               handleInsertFraction(exercise.id);
-                             }}
-                             disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                           >
-                             Insert Fraction
-                           </Button>
-                           <Button
-                             variant="outline"
-                             size="sm"
-                             onClick={(e) => {
-                               e.stopPropagation();
-                               toggleFractionEditor(exercise.id);
-                             }}
-                           >
-                             Cancel
-                           </Button>
-                         </div>
-                       </div>
-                     )}
-                    
-                     <div className="space-y-2">
+                     {/* Simple Fraction Input */}
+                     <div className="p-3 bg-muted/50 rounded-lg space-y-3">
+                        <div className="text-sm font-medium">Build Fraction:</div>
+                        <div className="grid grid-cols-3 gap-2 items-end">
+                          <div>
+                            <label className="text-xs text-muted-foreground block mb-1">Numerator</label>
+                            <input
+                              type="text"
+                              value={fractionInput[exercise.id]?.numerator || ''}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleFractionInput(exercise.id, 'numerator', e.target.value);
+                              }}
+                              className="w-full px-2 py-1 text-sm border rounded text-center bg-background"
+                              placeholder="Top"
+                            />
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-light text-muted-foreground">/</div>
+                          </div>
+                          <div>
+                            <label className="text-xs text-muted-foreground block mb-1">Denominator</label>
+                            <input
+                              type="text"
+                              value={fractionInput[exercise.id]?.denominator || ''}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                handleFractionInput(exercise.id, 'denominator', e.target.value);
+                              }}
+                              className="w-full px-2 py-1 text-sm border rounded text-center bg-background"
+                              placeholder="Bottom"
+                            />
+                          </div>
+                        </div>
+                        {fractionInput[exercise.id]?.numerator && fractionInput[exercise.id]?.denominator && (
+                          <div className="text-center">
+                            <div className="text-xs text-muted-foreground mb-1">Preview:</div>
+                            <Fraction 
+                              numerator={fractionInput[exercise.id].numerator} 
+                              denominator={fractionInput[exercise.id].denominator}
+                              className="text-lg"
+                            />
+                          </div>
+                        )}
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInsertFraction(exercise.id);
+                          }}
+                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                          className="w-full"
+                        >
+                          Add Fraction to Answer
+                        </Button>
+                      </div>
+                     
+                      <div className="space-y-2">
                        <div className="text-sm font-medium">Answer Preview:</div>
                        <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
                          {userAnswers[exercise.id] ? (
