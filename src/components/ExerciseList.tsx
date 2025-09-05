@@ -608,6 +608,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                        </div>
                      </div>
                      
+                     {/* Answer Preview */}
                      <div className="space-y-2">
                        <div className="text-sm font-medium">Answer Preview:</div>
                        <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
@@ -619,13 +620,6 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                            <span className="text-muted-foreground">Your answer will appear here...</span>
                          )}
                        </div>
-                       <Textarea
-                         placeholder="Write your solution here (or use the calculator above)..."
-                         value={userAnswers[exercise.id] || ''}
-                         onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
-                         className="min-h-20 font-mono"
-                         data-exercise-id={exercise.id}
-                       />
                      </div>
                   </div>
                 </div>
