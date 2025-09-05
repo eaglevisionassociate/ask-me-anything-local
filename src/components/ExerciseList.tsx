@@ -1,15 +1,15 @@
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { useExercises, Exercise } from '@/hooks/useExercises';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
 import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatMathExpression } from '@/lib/fractionUtils';
-import { Fraction, renderMathExpression } from '@/components/ui/fraction';
+import { renderMathExpression, formatMathExpression } from '@/components/ui/fraction';
 
 interface ExerciseListProps {
   lessonId?: string;
@@ -25,19 +25,24 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
   const [showAnswers, setShowAnswers] = useState<{ [key: string]: boolean }>({});
   const [submittedAnswers, setSubmittedAnswers] = useState<{ [key: string]: boolean }>({});
   const [answerFeedback, setAnswerFeedback] = useState<{ [key: string]: { isCorrect: boolean; feedback: string; explanationSteps?: string[] } }>({});
-  const [fractionInput, setFractionInput] = useState<{ [key: string]: { numerator: string; denominator: string; isEditing: boolean } }>({});
+
+  const [numerator, setNumerator] = useState('');
+  const [denominator, setDenominator] = useState('');
+
+  const handleInsertFraction = (exerciseId: string) => {
+    if (!numerator || !denominator) return;
+    const fraction = `\\frac{${numerator}}{${denominator}}`;
+    setUserAnswers(prev => ({
+      ...prev,
+      [exerciseId]: (prev[exerciseId] || '') + fraction
+    }));
+    setNumerator('');
+    setDenominator('');
+  };
 
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(selectedExercise === exercise.id ? null : exercise.id);
     onExerciseSelect?.(exercise);
-    
-    // Initialize fraction input state for this exercise
-    if (!fractionInput[exercise.id]) {
-      setFractionInput(prev => ({
-        ...prev,
-        [exercise.id]: { numerator: '', denominator: '', isEditing: false }
-      }));
-    }
   };
 
   const handleAnswerChange = (exerciseId: string, answer: string) => {
@@ -47,51 +52,6 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     }));
   };
 
-  const handleFractionInput = (exerciseId: string, field: 'numerator' | 'denominator', value: string) => {
-    setFractionInput(prev => ({
-      ...prev,
-      [exerciseId]: {
-        ...prev[exerciseId],
-        [field]: value
-      }
-    }));
-  };
-
-  const handleInsertFraction = (exerciseId: string) => {
-    const fraction = fractionInput[exerciseId];
-    if (!fraction.numerator || !fraction.denominator) return;
-
-    const fractionText = `\\frac{${fraction.numerator}}{${fraction.denominator}}`;
-    
-    // Add the fraction to the current answer
-    const currentAnswer = userAnswers[exerciseId] || '';
-    const newAnswer = currentAnswer + fractionText;
-    
-    handleAnswerChange(exerciseId, newAnswer);
-    
-    // Reset fraction input
-    setFractionInput(prev => ({
-      ...prev,
-      [exerciseId]: { numerator: '', denominator: '', isEditing: false }
-    }));
-  };
-
-  const toggleFractionEditor = (exerciseId: string) => {
-    setFractionInput(prev => ({
-      ...prev,
-      [exerciseId]: {
-        ...prev[exerciseId],
-        isEditing: !prev[exerciseId]?.isEditing
-      }
-    }));
-  };
-
-  const insertCommonFraction = (exerciseId: string, fraction: string) => {
-    const currentAnswer = userAnswers[exerciseId] || '';
-    const newAnswer = currentAnswer + fraction;
-    handleAnswerChange(exerciseId, newAnswer);
-  };
-
   const handleSubmitAnswer = async (exerciseId: string) => {
     const userAnswer = userAnswers[exerciseId]?.trim();
     if (!userAnswer) return;
@@ -99,69 +59,15 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     const exercise = exercises.find(e => e.id === exerciseId);
     if (!exercise) return;
 
-    // Enhanced answer checking with detailed explanations
     const normalizeAnswer = (answer: string) => 
       answer.trim().toLowerCase().replace(/\s+/g, '');
-    
+
     const correctAnswer = normalizeAnswer(exercise.answer);
     const submittedAnswer = normalizeAnswer(userAnswer);
-    
-    // Generate step-by-step explanation
-    const generateExplanation = (original: string, normalized: string, isUserAnswer: boolean) => {
-      const steps = [];
-      const label = isUserAnswer ? "Your answer" : "Correct answer";
-      
-      steps.push(`📝 ${label}: "${original}"`);
-      
-      if (original !== original.trim()) {
-        steps.push(`🧹 Remove extra spaces: "${original.trim()}"`);
-      }
-      
-      if (original.trim() !== original.trim().toLowerCase()) {
-        steps.push(`🔤 Convert to lowercase: "${original.trim().toLowerCase()}"`);
-      }
-      
-      if (original.trim().toLowerCase() !== normalized) {
-        steps.push(`📐 Remove all spaces: "${normalized}"`);
-      }
-      
-      // Mathematical normalization explanations
-      if (normalized.includes('x') && !normalized.match(/\d+x/)) {
-        steps.push(`🔢 Note: "x" is treated as "1x" (coefficient of 1 is implied)`);
-      }
-      
-      if (normalized.includes('y') && !normalized.match(/\d+y/)) {
-        steps.push(`🔢 Note: "y" is treated as "1y" (coefficient of 1 is implied)`);
-      }
-      
-      return steps;
-    };
-    
+
     const isCorrect = correctAnswer === submittedAnswer || 
                      correctAnswer.includes(submittedAnswer) ||
                      submittedAnswer.includes(correctAnswer);
-
-    // Generate detailed feedback with explanations
-    let feedback = "";
-    let explanationSteps = [];
-    
-    if (isCorrect) {
-      feedback = "🎉 Excellent work! You got it right!";
-    } else {
-      feedback = "Let me show you how I process answers:";
-      explanationSteps = [
-        ...generateExplanation(userAnswer, submittedAnswer, true),
-        "",
-        ...generateExplanation(exercise.answer, correctAnswer, false),
-        "",
-        "🔍 Comparison result:",
-        `   Your processed answer: "${submittedAnswer}"`,
-        `   Correct processed answer: "${correctAnswer}"`,
-        `   Match: ${correctAnswer === submittedAnswer ? "✅ Yes" : "❌ No"}`,
-        "",
-        "💡 Tip: Answers are checked ignoring spaces and letter case!"
-      ];
-    }
 
     setSubmittedAnswers(prev => ({
       ...prev,
@@ -172,12 +78,11 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
       ...prev,
       [exerciseId]: {
         isCorrect,
-        feedback,
-        explanationSteps
+        feedback: isCorrect ? "🎉 Excellent work! You got it right!" : "❌ That's not quite right. Try again!",
+        explanationSteps: []
       }
     }));
 
-    // Track the exercise completion
     const score = isCorrect ? 100 : 0;
     await completeExercise(
       `${exercise.question.substring(0, 30)}...`,
@@ -185,7 +90,6 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
       'Mathematics'
     );
 
-    // Auto-show answer after submission
     setShowAnswers(prev => ({
       ...prev,
       [exerciseId]: true
@@ -206,10 +110,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
       difficulty: 'medium',
       count: 2,
     });
-    
-    if (newExercises) {
-      refetch();
-    }
+    if (newExercises) refetch();
   };
 
   const handleResetExercises = () => {
@@ -218,15 +119,13 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     setShowAnswers({});
     setSubmittedAnswers({});
     setAnswerFeedback({});
-    setFractionInput({});
   };
 
   const handlePrintExercises = () => {
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const printContent = `
-      <!DOCTYPE html>
+    const printContent = `<!DOCTYPE html>
       <html>
         <head>
           <title>Math Exercises - Print</title>
@@ -239,6 +138,8 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
             .difficulty { background: #f0f0f0; padding: 2px 8px; border-radius: 3px; font-size: 12px; }
             @media print { body { margin: 0; } }
           </style>
+          <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
         </head>
         <body>
           <div class="header">
@@ -256,11 +157,18 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
               <div class="answer-space">
                 <strong>Answer:</strong>
               </div>
-            </div>
-          `).join('')}
+              ${exercise.answer ? `<div class="correct-answer"><strong>Correct Answer:</strong> ${formatMathExpression(exercise.answer)}</div>` : ''}
+              ${exercise.explanation ? `<div class="explanation"><strong>Explanation:</strong> ${formatMathExpression(exercise.explanation)}</div>` : ''}
+            </div>`).join('')}
+          <script>
+            document.querySelectorAll('.question, .correct-answer, .explanation').forEach(el => {
+              try {
+                katex.render(el.textContent, el, { throwOnError: false });
+              } catch (e) {}
+            });
+          </script>
         </body>
-      </html>
-    `;
+      </html>`;
 
     printWindow.document.write(printContent);
     printWindow.document.close();
@@ -315,14 +223,14 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
   if (exercises.length === 0) {
     return (
       <Card>
-      <CardContent className="pt-6">
-        <div className="text-center text-muted-foreground">
-          <Brain className="w-8 h-8 mx-auto mb-2" />
-          <p>No exercises available yet.</p>
-          <p className="text-sm">Ask the AI tutor to create some practice problems!</p>
-        </div>
-      </CardContent>
-    </Card>
+        <CardContent className="pt-6">
+          <div className="text-center text-muted-foreground">
+            <Brain className="w-8 h-8 mx-auto mb-2" />
+            <p>No exercises available yet.</p>
+            <p className="text-sm">Ask the AI tutor to create some practice problems!</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -332,30 +240,15 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
         <h3 className="text-lg font-semibold">Math Exercises</h3>
         <div className="flex items-center gap-2">
           <Badge variant="outline">{exercises.length} problems</Badge>
-          <Button
-            onClick={handlePrintExercises}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
+          <Button onClick={handlePrintExercises} variant="outline" size="sm" className="gap-2">
             <Printer className="w-4 h-4" />
             Print
           </Button>
-          <Button
-            onClick={handleResetExercises}
-            variant="outline"
-            size="sm"
-            className="gap-2"
-          >
+          <Button onClick={handleResetExercises} variant="outline" size="sm" className="gap-2">
             <RotateCcw className="w-4 h-4" />
             Reset
           </Button>
-          <Button
-            onClick={handleGenerateExercise}
-            disabled={isGenerating}
-            size="sm"
-            className="gap-2"
-          >
+          <Button onClick={handleGenerateExercise} disabled={isGenerating} size="sm" className="gap-2">
             {isGenerating ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
@@ -369,9 +262,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
       {exercises.map((exercise, index) => (
         <Card 
           key={exercise.id} 
-          className={`cursor-pointer transition-all ${
-            selectedExercise === exercise.id ? 'ring-2 ring-primary' : 'hover:shadow-md'
-          }`}
+          className={`cursor-pointer transition-all ${selectedExercise === exercise.id ? 'ring-2 ring-primary' : 'hover:shadow-md'}`}
           onClick={() => handleExerciseClick(exercise)}
         >
           <CardHeader>
@@ -390,93 +281,55 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
           <CardContent className="space-y-4">
             <div className="prose prose-sm max-w-none">
               <div className="text-foreground whitespace-pre-wrap text-lg">
-                {renderMathExpression(exercise.question) || formatMathExpression(exercise.question)}
+                {renderMathExpression(formatMathExpression(exercise.question))}
               </div>
             </div>
 
             {selectedExercise === exercise.id && (
               <div className="space-y-4 border-t pt-4" onClick={(e) => e.stopPropagation()}>
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Your Answer:</label>
-                  <div className="space-y-2">
-                     {/* Simple Fraction Input */}
-                     <div className="p-3 bg-muted/50 rounded-lg space-y-3">
-                        <div className="text-sm font-medium">Build Fraction:</div>
-                        <div className="grid grid-cols-3 gap-2 items-end">
-                          <div>
-                            <label className="text-xs text-muted-foreground block mb-1">Numerator</label>
-                            <input
-                              type="text"
-                              value={fractionInput[exercise.id]?.numerator || ''}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                handleFractionInput(exercise.id, 'numerator', e.target.value);
-                              }}
-                              className="w-full px-2 py-1 text-sm border rounded text-center bg-background"
-                              placeholder="Top"
-                            />
-                          </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-light text-muted-foreground">/</div>
-                          </div>
-                          <div>
-                            <label className="text-xs text-muted-foreground block mb-1">Denominator</label>
-                            <input
-                              type="text"
-                              value={fractionInput[exercise.id]?.denominator || ''}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                handleFractionInput(exercise.id, 'denominator', e.target.value);
-                              }}
-                              className="w-full px-2 py-1 text-sm border rounded text-center bg-background"
-                              placeholder="Bottom"
-                            />
-                          </div>
-                        </div>
-                        {fractionInput[exercise.id]?.numerator && fractionInput[exercise.id]?.denominator && (
-                          <div className="text-center">
-                            <div className="text-xs text-muted-foreground mb-1">Preview:</div>
-                            <Fraction 
-                              numerator={fractionInput[exercise.id].numerator} 
-                              denominator={fractionInput[exercise.id].denominator}
-                              className="text-lg"
-                            />
-                          </div>
-                        )}
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInsertFraction(exercise.id);
-                          }}
-                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                          className="w-full"
-                        >
-                          Add Fraction to Answer
-                        </Button>
-                      </div>
-                     
-                      <div className="space-y-2">
-                       <div className="text-sm font-medium">Answer Preview:</div>
-                       <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
-                         {userAnswers[exercise.id] ? (
-                           <div className="w-full">
-                             {renderMathExpression(userAnswers[exercise.id])}
-                           </div>
-                         ) : (
-                           <span className="text-muted-foreground">Your answer will appear here...</span>
-                         )}
-                       </div>
-                       <Textarea
-                         placeholder="Write your solution here (or use the calculator above)..."
-                         value={userAnswers[exercise.id] || ''}
-                         onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
-                         className="min-h-20 font-mono"
-                         data-exercise-id={exercise.id}
-                       />
-                     </div>
+                <div className="space-y-2">
+                  <div className="text-sm font-medium">Answer Preview:</div>
+                  <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
+                    <div className="w-full">
+                      {userAnswers[exercise.id]?.trim() ? (
+                        renderMathExpression(formatMathExpression(userAnswers[exercise.id]))
+                      ) : (
+                        <span className="text-muted-foreground">Your answer will appear here...</span>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Fraction Input UI */}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Numerator"
+                      value={numerator}
+                      onChange={(e) => setNumerator(e.target.value)}
+                      className="w-24"
+                    />
+                    <span className="text-lg">/</span>
+                    <Input
+                      placeholder="Denominator"
+                      value={denominator}
+                      onChange={(e) => setDenominator(e.target.value)}
+                      className="w-24"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => handleInsertFraction(exercise.id)}
+                      size="sm"
+                    >
+                      Insert Fraction
+                    </Button>
+                  </div>
+
+                  <Textarea
+                    placeholder="Write your solution here (use a/b or insert fractions)..."
+                    value={userAnswers[exercise.id] || ''}
+                    onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
+                    className="min-h-20 font-mono"
+                    data-exercise-id={exercise.id}
+                  />
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -522,42 +375,26 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                         <XCircle className="w-4 h-4 text-red-600" />
                       )}
                       <p className="text-sm font-medium">
-                        {answerFeedback[exercise.id].isCorrect 
-                          ? "🎉 Excellent work! You got it right!" 
-                          : answerFeedback[exercise.id].feedback}
+                        {answerFeedback[exercise.id].feedback}
                       </p>
-                     </div>
-                     
-                     {answerFeedback[exercise.id].explanationSteps && (
-                       <div className="mt-3 p-3 bg-gray-50 border rounded-lg">
-                         <h4 className="font-medium text-sm mb-2">📖 Step-by-step answer processing:</h4>
-                         <div className="space-y-1 text-xs font-mono">
-                           {answerFeedback[exercise.id].explanationSteps.map((step, index) => (
-                             <div key={index} className={step === "" ? "h-2" : ""}>
-                               {step && <p>{step}</p>}
-                             </div>
-                           ))}
-                         </div>
-                       </div>
-                     )}
-                   </div>
-                 )}
+                    </div>
+                  </div>
+                )}
 
                 {showAnswers[exercise.id] && (
                   <div className="bg-muted p-4 rounded-lg space-y-2">
                     <div>
-                       <h4 className="font-medium text-sm mb-1">Correct Answer:</h4>
-                       <div className="text-lg whitespace-pre-wrap">
-                         {renderMathExpression(exercise.answer) || formatMathExpression(exercise.answer)}
-                       </div>
+                      <h4 className="font-medium text-sm mb-1">Correct Answer:</h4>
+                      <div className="text-lg whitespace-pre-wrap">
+                        {renderMathExpression(formatMathExpression(exercise.answer))}
+                      </div>
                     </div>
-                    
                     {exercise.explanation && (
                       <div>
-                         <h4 className="font-medium text-sm mb-1">Explanation:</h4>
-                         <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-                           {renderMathExpression(exercise.explanation) || formatMathExpression(exercise.explanation)}
-                         </div>
+                        <h4 className="font-medium text-sm mb-1">Explanation:</h4>
+                        <div className="text-sm text-muted-foreground whitespace-pre-wrap">
+                          {renderMathExpression(formatMathExpression(exercise.explanation))}
+                        </div>
                       </div>
                     )}
                   </div>
