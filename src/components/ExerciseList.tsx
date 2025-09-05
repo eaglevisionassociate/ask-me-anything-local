@@ -136,7 +136,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                 <h3>Problem ${index + 1}</h3>
                 ${exercise.difficulty ? `<span class="difficulty">${exercise.difficulty}</span>` : ''}
               </div>
-              <div class="question">${exercise.question}</div>
+              <div class="question">${formatMathExpression(exercise.question)}</div>
               <div class="answer-space">
                 <strong>Answer:</strong>
               </div>
@@ -255,7 +255,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
           <CardContent className="space-y-4">
             <div className="prose prose-sm max-w-none">
               <div className="text-foreground whitespace-pre-wrap text-lg">
-                {renderMathExpression(exercise.question)}
+                {renderMathExpression(formatMathExpression(exercise.question))}
               </div>
             </div>
 
