@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +26,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
   const [submittedAnswers, setSubmittedAnswers] = useState<{ [key: string]: boolean }>({});
   const [answerFeedback, setAnswerFeedback] = useState<{ [key: string]: { isCorrect: boolean; feedback: string; explanationSteps?: string[] } }>({});
   const [fractionInput, setFractionInput] = useState<{ [key: string]: { numerator: string; denominator: string; isEditing: boolean } }>({});
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(selectedExercise === exercise.id ? null : exercise.id);
@@ -58,7 +59,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
   };
 
   const handleInsertFraction = (exerciseId: string, operator?: string) => {
-    const fraction = fractionInput[exerciseId];
+    const fraction = fractionInput[exercise.id];
     if (!fraction.numerator || !fraction.denominator) return;
 
     const fractionText = `\\frac{${fraction.numerator}}{${fraction.denominator}}`;
@@ -74,6 +75,13 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
       ...prev,
       [exerciseId]: { numerator: '', denominator: '', isEditing: false }
     }));
+
+    // Focus back on the textarea after inserting fraction
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 100);
   };
 
   const toggleFractionEditor = (exerciseId: string) => {
@@ -90,12 +98,26 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     const currentAnswer = userAnswers[exerciseId] || '';
     const newAnswer = currentAnswer + fraction;
     handleAnswerChange(exerciseId, newAnswer);
+
+    // Focus back on the textarea after inserting fraction
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 100);
   };
 
   const insertOperator = (exerciseId: string, operator: string) => {
     const currentAnswer = userAnswers[exerciseId] || '';
     const newAnswer = currentAnswer + ` ${operator} `;
     handleAnswerChange(exerciseId, newAnswer);
+
+    // Focus back on the textarea after inserting operator
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 100);
   };
 
   const handleSubmitAnswer = async (exerciseId: string) => {
@@ -256,7 +278,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
             <div class="exercise">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                 <h3>Problem ${index + 1}</h3>
-                ${exercise.difficulty ? `<span class="difficulty">${exercise.difficulty}</span>` : ''}
+                ${exercise.difficulty ? `<span class="difficulty">${exercise.difficulty}` : ''}
               </div>
               <div class="question">${formatMathExpression(exercise.question)}</div>
               <div class="answer-space">
@@ -286,6 +308,15 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Auto-focus on textarea when exercise is selected
+  useEffect(() => {
+    if (selectedExercise && textareaRef.current) {
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+    }
+  }, [selectedExercise]);
 
   if (loading) {
     return (
@@ -620,6 +651,14 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                            <span className="text-muted-foreground">Your answer will appear here...</span>
                          )}
                        </div>
+                       <Textarea
+                         ref={textareaRef}
+                         placeholder="Type your answer here or use the tools above..."
+                         value={userAnswers[exercise.id] || ''}
+                         onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
+                         className="min-h-20 font-mono"
+                         data-exercise-id={exercise.id}
+                       />
                      </div>
                   </div>
                 </div>
