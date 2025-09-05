@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { useExercises, Exercise } from '@/hooks/useExercises';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
@@ -24,6 +25,20 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
   const [showAnswers, setShowAnswers] = useState<{ [key: string]: boolean }>({});
   const [submittedAnswers, setSubmittedAnswers] = useState<{ [key: string]: boolean }>({});
   const [answerFeedback, setAnswerFeedback] = useState<{ [key: string]: { isCorrect: boolean; feedback: string; explanationSteps?: string[] } }>({});
+
+  const [numerator, setNumerator] = useState('');
+  const [denominator, setDenominator] = useState('');
+
+  const handleInsertFraction = (exerciseId: string) => {
+    if (!numerator || !denominator) return;
+    const fraction = `\\frac{${numerator}}{${denominator}}`;
+    setUserAnswers(prev => ({
+      ...prev,
+      [exerciseId]: (prev[exerciseId] || '') + fraction
+    }));
+    setNumerator('');
+    setDenominator('');
+  };
 
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(selectedExercise === exercise.id ? null : exercise.id);
@@ -123,6 +138,8 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
             .difficulty { background: #f0f0f0; padding: 2px 8px; border-radius: 3px; font-size: 12px; }
             @media print { body { margin: 0; } }
           </style>
+          <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
         </head>
         <body>
           <div class="header">
@@ -140,7 +157,16 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
               <div class="answer-space">
                 <strong>Answer:</strong>
               </div>
+              ${exercise.answer ? `<div class="correct-answer"><strong>Correct Answer:</strong> ${formatMathExpression(exercise.answer)}</div>` : ''}
+              ${exercise.explanation ? `<div class="explanation"><strong>Explanation:</strong> ${formatMathExpression(exercise.explanation)}</div>` : ''}
             </div>`).join('')}
+          <script>
+            document.querySelectorAll('.question, .correct-answer, .explanation').forEach(el => {
+              try {
+                katex.render(el.textContent, el, { throwOnError: false });
+              } catch (e) {}
+            });
+          </script>
         </body>
       </html>`;
 
@@ -272,8 +298,33 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                       )}
                     </div>
                   </div>
+
+                  {/* Fraction Input UI */}
+                  <div className="flex items-center gap-2">
+                    <Input
+                      placeholder="Numerator"
+                      value={numerator}
+                      onChange={(e) => setNumerator(e.target.value)}
+                      className="w-24"
+                    />
+                    <span className="text-lg">/</span>
+                    <Input
+                      placeholder="Denominator"
+                      value={denominator}
+                      onChange={(e) => setDenominator(e.target.value)}
+                      className="w-24"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => handleInsertFraction(exercise.id)}
+                      size="sm"
+                    >
+                      Insert Fraction
+                    </Button>
+                  </div>
+
                   <Textarea
-                    placeholder="Write your solution here (use a/b for fractions)..."
+                    placeholder="Write your solution here (use a/b or insert fractions)..."
                     value={userAnswers[exercise.id] || ''}
                     onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
                     className="min-h-20 font-mono"
