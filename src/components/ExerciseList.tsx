@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { useExercises, Exercise } from '@/components/ui/fraction';
+import { useExercises, Exercise } from '@/hooks/useExercises';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
 import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer } from 'lucide-react';
@@ -26,6 +26,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
   const [submittedAnswers, setSubmittedAnswers] = useState<{ [key: string]: boolean }>({});
   const [answerFeedback, setAnswerFeedback] = useState<{ [key: string]: { isCorrect: boolean; feedback: string; explanationSteps?: string[] } }>({});
   const [fractionInput, setFractionInput] = useState<{ [key: string]: { numerator: string; denominator: string; isEditing: boolean } }>({});
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(selectedExercise === exercise.id ? null : exercise.id);
@@ -74,6 +75,13 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
       ...prev,
       [exerciseId]: { numerator: '', denominator: '', isEditing: false }
     }));
+
+    // Focus back on the textarea after inserting fraction
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 100);
   };
 
   const toggleFractionEditor = (exerciseId: string) => {
@@ -90,12 +98,26 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     const currentAnswer = userAnswers[exerciseId] || '';
     const newAnswer = currentAnswer + fraction;
     handleAnswerChange(exerciseId, newAnswer);
+
+    // Focus back on the textarea after inserting fraction
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 100);
   };
 
   const insertOperator = (exerciseId: string, operator: string) => {
     const currentAnswer = userAnswers[exerciseId] || '';
     const newAnswer = currentAnswer + ` ${operator} `;
     handleAnswerChange(exerciseId, newAnswer);
+
+    // Focus back on the textarea after inserting operator
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+      }
+    }, 100);
   };
 
   const handleSubmitAnswer = async (exerciseId: string) => {
@@ -286,6 +308,15 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  // Auto-focus on textarea when exercise is selected
+  useEffect(() => {
+    if (selectedExercise && textareaRef.current) {
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 100);
+    }
+  }, [selectedExercise]);
 
   if (loading) {
     return (
@@ -621,6 +652,7 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                          )}
                        </div>
                        <Textarea
+                         ref={textareaRef}
                          placeholder="Type your answer here or use the fraction tools and operators above..."
                          value={userAnswers[exercise.id] || ''}
                          onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
