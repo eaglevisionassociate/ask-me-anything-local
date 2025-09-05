@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { useExercises, Exercise } from '@/hooks/useExercises';
+import { useExercises, Exercise } from '@/components/ui/fraction';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
 import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer } from 'lucide-react';
@@ -608,18 +608,25 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                        </div>
                      </div>
                      
-                     {/* Answer Preview */}
+                     {/* Combined Answer Input */}
                      <div className="space-y-2">
-                       <div className="text-sm font-medium">Answer Preview:</div>
+                       <div className="text-sm font-medium">Write your solution here:</div>
                        <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
                          {userAnswers[exercise.id] ? (
                            <div className="w-full">
                              {renderMathExpression(userAnswers[exercise.id])}
                            </div>
                          ) : (
-                           <span className="text-muted-foreground">Your answer will appear here...</span>
+                           <span className="text-muted-foreground">Your answer will appear here as you type or use the tools above...</span>
                          )}
                        </div>
+                       <Textarea
+                         placeholder="Type your answer here or use the fraction tools and operators above..."
+                         value={userAnswers[exercise.id] || ''}
+                         onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
+                         className="min-h-20 font-mono"
+                         data-exercise-id={exercise.id}
+                       />
                      </div>
                   </div>
                 </div>
