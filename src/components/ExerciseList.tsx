@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { useExercises, Exercise } from '@/components/ui/fraction';
+import { useExercises, Exercise } from '@/hooks/useExercises';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
 import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer } from 'lucide-react';
@@ -61,7 +61,8 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     const fraction = fractionInput[exerciseId];
     if (!fraction.numerator || !fraction.denominator) return;
 
-    const fractionText = `\\frac{${fraction.numerator}}{${fraction.denominator}}`;
+    // Use a user-friendly fraction format instead of LaTeX
+    const fractionText = `(${fraction.numerator})/(${fraction.denominator})`;
     
     // Add the fraction to the current answer with optional operator
     const currentAnswer = userAnswers[exerciseId] || '';
@@ -395,8 +396,8 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
           
           <CardContent className="space-y-4">
             <div className="prose prose-sm max-w-none">
-              <div className="text-foreground whitespace-pre-wrap text-lg">
-                {renderMathExpression(exercise.question) || formatMathExpression(exercise.question)}
+                <div className="text-foreground whitespace-pre-wrap text-lg">
+                {renderMathExpression(exercise.question)}
               </div>
             </div>
 

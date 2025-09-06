@@ -32,32 +32,61 @@ export const MathExpression: React.FC<MathExpressionProps> = ({ children, classN
 export const renderMathExpression = (text: string): React.ReactNode => {
   if (!text) return text;
   
-  // First apply the existing formatting for Unicode symbols
-  let processedText = text;
-  
-  // Handle LaTeX-style fractions \frac{num}{den}
-  const fractionRegex = /\\frac\{([^}]+)\}\{([^}]+)\}/g;
+  const processedText = text;
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
-  let match;
   
-  while ((match = fractionRegex.exec(processedText)) !== null) {
+  // Create a combined regex to find all fraction patterns
+  const allFractions = [];
+  
+  // Find LaTeX fractions
+  const latexFractionRegex = /\\frac\{([^}]+)\}\{([^}]+)\}/g;
+  let match;
+  while ((match = latexFractionRegex.exec(processedText)) !== null) {
+    allFractions.push({
+      index: match.index,
+      length: match[0].length,
+      numerator: match[1],
+      denominator: match[2],
+      type: 'latex'
+    });
+  }
+  
+  // Find user-friendly fractions
+  const userFractionRegex = /\(([^)]+)\)\/\(([^)]+)\)/g;
+  while ((match = userFractionRegex.exec(processedText)) !== null) {
+    allFractions.push({
+      index: match.index,
+      length: match[0].length,
+      numerator: match[1],
+      denominator: match[2],
+      type: 'user'
+    });
+  }
+  
+  // Sort fractions by index
+  allFractions.sort((a, b) => a.index - b.index);
+  
+  // Build the result with fraction components
+  for (let i = 0; i < allFractions.length; i++) {
+    const fraction = allFractions[i];
+    
     // Add text before the fraction
-    if (match.index > lastIndex) {
-      parts.push(processedText.slice(lastIndex, match.index));
+    if (fraction.index > lastIndex) {
+      parts.push(processedText.slice(lastIndex, fraction.index));
     }
     
     // Add the fraction component
     parts.push(
       <Fraction 
-        key={match.index} 
-        numerator={match[1]} 
-        denominator={match[2]} 
+        key={`${fraction.type}-${fraction.index}`} 
+        numerator={fraction.numerator} 
+        denominator={fraction.denominator} 
         className="mx-1"
       />
     );
     
-    lastIndex = match.index + match[0].length;
+    lastIndex = fraction.index + fraction.length;
   }
   
   // Add remaining text
