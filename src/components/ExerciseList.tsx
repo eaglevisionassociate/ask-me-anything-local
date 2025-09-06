@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { useExercises, Exercise } from '@/hooks/useExercises';
+import { useExercises, Exercise } from '@/components/ui/fraction';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
 import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer } from 'lucide-react';
@@ -57,15 +57,15 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     }));
   };
 
-  const handleInsertFraction = (exerciseId: string) => {
+  const handleInsertFraction = (exerciseId: string, operator?: string) => {
     const fraction = fractionInput[exerciseId];
     if (!fraction.numerator || !fraction.denominator) return;
 
     const fractionText = `\\frac{${fraction.numerator}}{${fraction.denominator}}`;
     
-    // Add the fraction to the current answer
+    // Add the fraction to the current answer with optional operator
     const currentAnswer = userAnswers[exerciseId] || '';
-    const newAnswer = currentAnswer + fractionText;
+    const newAnswer = operator ? currentAnswer + ` ${operator} ${fractionText}` : currentAnswer + fractionText;
     
     handleAnswerChange(exerciseId, newAnswer);
     
@@ -89,6 +89,12 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
   const insertCommonFraction = (exerciseId: string, fraction: string) => {
     const currentAnswer = userAnswers[exerciseId] || '';
     const newAnswer = currentAnswer + fraction;
+    handleAnswerChange(exerciseId, newAnswer);
+  };
+
+  const insertOperator = (exerciseId: string, operator: string) => {
+    const currentAnswer = userAnswers[exerciseId] || '';
+    const newAnswer = currentAnswer + ` ${operator} `;
     handleAnswerChange(exerciseId, newAnswer);
   };
 
@@ -443,33 +449,179 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                             />
                           </div>
                         )}
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInsertFraction(exercise.id);
-                          }}
-                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                          className="w-full"
-                        >
-                          Add Fraction to Answer
-                        </Button>
+                        <div className="grid grid-cols-4 gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInsertFraction(exercise.id);
+                            }}
+                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                            className="col-span-4"
+                          >
+                            Add Fraction
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInsertFraction(exercise.id, '+');
+                            }}
+                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                          >
+                            + Fraction
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInsertFraction(exercise.id, '-');
+                            }}
+                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                          >
+                            - Fraction
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInsertFraction(exercise.id, '×');
+                            }}
+                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                          >
+                            × Fraction
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleInsertFraction(exercise.id, '÷');
+                            }}
+                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                          >
+                            ÷ Fraction
+                          </Button>
+                        </div>
                       </div>
                      
-                      <div className="space-y-2">
-                       <div className="text-sm font-medium">Answer Preview:</div>
+                     {/* Math Operators */}
+                     <div className="p-3 bg-muted/50 rounded-lg">
+                       <div className="text-sm font-medium mb-2">Math Operators:</div>
+                       <div className="grid grid-cols-4 gap-2">
+                         <Button
+                           type="button"
+                           size="sm"
+                           variant="outline"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             insertOperator(exercise.id, '+');
+                           }}
+                         >
+                           +
+                         </Button>
+                         <Button
+                           type="button"
+                           size="sm"
+                           variant="outline"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             insertOperator(exercise.id, '-');
+                           }}
+                         >
+                           -
+                         </Button>
+                         <Button
+                           type="button"
+                           size="sm"
+                           variant="outline"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             insertOperator(exercise.id, '×');
+                           }}
+                         >
+                           ×
+                         </Button>
+                         <Button
+                           type="button"
+                           size="sm"
+                           variant="outline"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             insertOperator(exercise.id, '÷');
+                           }}
+                         >
+                           ÷
+                         </Button>
+                         <Button
+                           type="button"
+                           size="sm"
+                           variant="outline"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             insertOperator(exercise.id, '=');
+                           }}
+                         >
+                           =
+                         </Button>
+                         <Button
+                           type="button"
+                           size="sm"
+                           variant="outline"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             insertOperator(exercise.id, '<');
+                           }}
+                         >
+                           &lt;
+                         </Button>
+                         <Button
+                           type="button"
+                           size="sm"
+                           variant="outline"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             insertOperator(exercise.id, '>');
+                           }}
+                         >
+                           &gt;
+                         </Button>
+                         <Button
+                           type="button"
+                           size="sm"
+                           variant="outline"
+                           onClick={(e) => {
+                             e.stopPropagation();
+                             insertOperator(exercise.id, '√');
+                           }}
+                         >
+                           √
+                         </Button>
+                       </div>
+                     </div>
+                     
+                     {/* Combined Answer Input */}
+                     <div className="space-y-2">
+                       <div className="text-sm font-medium">Write your solution here:</div>
                        <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
                          {userAnswers[exercise.id] ? (
                            <div className="w-full">
                              {renderMathExpression(userAnswers[exercise.id])}
                            </div>
                          ) : (
-                           <span className="text-muted-foreground">Your answer will appear here...</span>
+                           <span className="text-muted-foreground">Your answer will appear here as you type or use the tools above...</span>
                          )}
                        </div>
                        <Textarea
-                         placeholder="Write your solution here (or use the calculator above)..."
+                         placeholder="Type your answer here or use the fraction tools and operators above..."
                          value={userAnswers[exercise.id] || ''}
                          onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
                          className="min-h-20 font-mono"
