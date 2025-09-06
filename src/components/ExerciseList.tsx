@@ -13,10 +13,11 @@ import { Fraction, renderMathExpression } from '@/components/ui/fraction';
 
 interface ExerciseListProps {
   lessonId?: string;
+  topic?: string;
   onExerciseSelect?: (exercise: Exercise) => void;
 }
 
-export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) => {
+export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseListProps) => {
   const { exercises, loading, error, refetch } = useExercises(lessonId);
   const { generateExercise, isGenerating } = useGenerateExercise();
   const { completeExercise } = useActivityTracking();
@@ -106,12 +107,49 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
     const exercise = exercises.find(e => e.id === exerciseId);
     if (!exercise) return;
 
-    // Enhanced answer checking with detailed explanations
-    const normalizeAnswer = (answer: string) => 
-      answer.trim().toLowerCase().replace(/\s+/g, '');
+    // Enhanced answer checking with flexible mathematical equivalence
+    const normalizeAnswer = (answer: string) => {
+      return answer.trim().toLowerCase().replace(/\s+/g, '');
+    };
+    
+    // Convert fractions to decimals for comparison
+    const evaluateMathExpression = (expression: string): number | null => {
+      try {
+        // Handle fractions like (3)/(4) or 3/4
+        const fractionMatch = expression.match(/\(?(\d+)\)?\s*\/\s*\(?(\d+)\)?/);
+        if (fractionMatch) {
+          const numerator = parseFloat(fractionMatch[1]);
+          const denominator = parseFloat(fractionMatch[2]);
+          return denominator !== 0 ? numerator / denominator : null;
+        }
+        
+        // Handle decimals and whole numbers
+        const number = parseFloat(expression);
+        return isNaN(number) ? null : number;
+      } catch {
+        return null;
+      }
+    };
     
     const correctAnswer = normalizeAnswer(exercise.answer);
     const submittedAnswer = normalizeAnswer(userAnswer);
+    
+    // Check for exact text match first
+    let isCorrect = correctAnswer === submittedAnswer;
+    
+    // If not exact match, try mathematical equivalence
+    if (!isCorrect) {
+      const correctValue = evaluateMathExpression(correctAnswer);
+      const submittedValue = evaluateMathExpression(submittedAnswer);
+      
+      if (correctValue !== null && submittedValue !== null) {
+        // Check if values are approximately equal (handle floating point precision)
+        isCorrect = Math.abs(correctValue - submittedValue) < 0.0001;
+      } else {
+        // Fall back to substring matching for non-numeric answers
+        isCorrect = correctAnswer.includes(submittedAnswer) || submittedAnswer.includes(correctAnswer);
+      }
+    }
     
     // Generate step-by-step explanation
     const generateExplanation = (original: string, normalized: string, isUserAnswer: boolean) => {
@@ -132,21 +170,14 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
         steps.push(`📐 Remove all spaces: "${normalized}"`);
       }
       
-      // Mathematical normalization explanations
-      if (normalized.includes('x') && !normalized.match(/\d+x/)) {
-        steps.push(`🔢 Note: "x" is treated as "1x" (coefficient of 1 is implied)`);
-      }
-      
-      if (normalized.includes('y') && !normalized.match(/\d+y/)) {
-        steps.push(`🔢 Note: "y" is treated as "1y" (coefficient of 1 is implied)`);
+      // Show mathematical evaluation if possible
+      const mathValue = evaluateMathExpression(normalized);
+      if (mathValue !== null) {
+        steps.push(`🔢 Mathematical value: ${mathValue}`);
       }
       
       return steps;
     };
-    
-    const isCorrect = correctAnswer === submittedAnswer || 
-                     correctAnswer.includes(submittedAnswer) ||
-                     submittedAnswer.includes(correctAnswer);
 
     // Generate detailed feedback with explanations
     let feedback = "";
@@ -397,7 +428,9 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
           <CardContent className="space-y-4">
             <div className="prose prose-sm max-w-none">
                 <div className="text-foreground whitespace-pre-wrap text-lg">
-                {renderMathExpression(exercise.question)}
+                {topic?.toLowerCase().includes('science') 
+                  ? exercise.question 
+                  : renderMathExpression(exercise.question)}
               </div>
             </div>
 
@@ -612,15 +645,17 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
                      {/* Combined Answer Input */}
                      <div className="space-y-2">
                        <div className="text-sm font-medium">Write your solution here:</div>
-                       <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
-                         {userAnswers[exercise.id] ? (
-                           <div className="w-full">
-                             {renderMathExpression(userAnswers[exercise.id])}
-                           </div>
-                         ) : (
-                           <span className="text-muted-foreground">Your answer will appear here as you type or use the tools above...</span>
-                         )}
-                       </div>
+                        <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
+                          {userAnswers[exercise.id] ? (
+                            <div className="w-full">
+                              {topic?.toLowerCase().includes('science') 
+                                ? userAnswers[exercise.id] 
+                                : renderMathExpression(userAnswers[exercise.id])}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground">Your answer will appear here as you type or use the tools above...</span>
+                          )}
+                        </div>
                        <Textarea
                          placeholder="Type your answer here or use the fraction tools and operators above..."
                          value={userAnswers[exercise.id] || ''}
@@ -698,21 +733,25 @@ export const ExerciseList = ({ lessonId, onExerciseSelect }: ExerciseListProps) 
 
                 {showAnswers[exercise.id] && (
                   <div className="bg-muted p-4 rounded-lg space-y-2">
-                    <div>
-                       <h4 className="font-medium text-sm mb-1">Correct Answer:</h4>
-                       <div className="text-lg whitespace-pre-wrap">
-                         {renderMathExpression(exercise.answer) || formatMathExpression(exercise.answer)}
+                     <div>
+                        <h4 className="font-medium text-sm mb-1">Correct Answer:</h4>
+                        <div className="text-lg whitespace-pre-wrap">
+                          {topic?.toLowerCase().includes('science') 
+                            ? exercise.answer 
+                            : (renderMathExpression(exercise.answer) || formatMathExpression(exercise.answer))}
+                        </div>
+                     </div>
+                     
+                     {exercise.explanation && (
+                       <div>
+                          <h4 className="font-medium text-sm mb-1">Explanation:</h4>
+                          <div className="text-sm text-muted-foreground whitespace-pre-wrap">
+                            {topic?.toLowerCase().includes('science') 
+                              ? exercise.explanation 
+                              : (renderMathExpression(exercise.explanation) || formatMathExpression(exercise.explanation))}
+                          </div>
                        </div>
-                    </div>
-                    
-                    {exercise.explanation && (
-                      <div>
-                         <h4 className="font-medium text-sm mb-1">Explanation:</h4>
-                         <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-                           {renderMathExpression(exercise.explanation) || formatMathExpression(exercise.explanation)}
-                         </div>
-                      </div>
-                    )}
+                     )}
                   </div>
                 )}
               </div>

@@ -252,7 +252,7 @@ export const LessonFlow = ({ topic }: LessonFlowProps) => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ExerciseList lessonId={selectedLesson.id} />
+            <ExerciseList lessonId={selectedLesson.id} topic={topic} />
             <div className="mt-6 space-y-4">
               <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                 <p className="text-sm text-blue-800 mb-2">
