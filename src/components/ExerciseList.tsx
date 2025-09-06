@@ -109,7 +109,26 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
 
     // Enhanced answer checking with flexible mathematical equivalence
     const normalizeAnswer = (answer: string) => {
-      return answer.trim().toLowerCase().replace(/\s+/g, '');
+      let normalized = answer.trim().toLowerCase();
+      
+      // Remove common conjunctions and punctuation
+      normalized = normalized.replace(/\b(and|or|&)\b/g, ',');
+      
+      // Clean up multiple commas and spaces
+      normalized = normalized.replace(/[,\s]+/g, ',');
+      normalized = normalized.replace(/^,|,$/g, ''); // Remove leading/trailing commas
+      
+      // For comma-separated lists, sort the items to ignore order
+      if (normalized.includes(',')) {
+        const items = normalized.split(',')
+          .map(item => item.trim())
+          .filter(item => item.length > 0)
+          .sort();
+        return items.join(',');
+      }
+      
+      // For single words/phrases, just remove all spaces
+      return normalized.replace(/\s+/g, '');
     };
     
     // Convert fractions to decimals for comparison
