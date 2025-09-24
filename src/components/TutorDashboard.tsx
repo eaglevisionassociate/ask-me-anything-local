@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChatInterface } from "./ChatInterface";
 import { ExerciseList } from "./ExerciseList";
 import { LessonFlow } from "./LessonFlow";
+import { PhotoUpload } from "./PhotoUpload";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useToast } from "@/hooks/use-toast";
@@ -76,8 +77,8 @@ export const TutorDashboard = () => {
   };
 
   const handleSubjectSelect = (subject: Subject) => {
-    if (subject.id !== "math" && subject.id !== "science") {
-      return; // Only Math and Science are available
+    if (subject.id !== "math") {
+      return; // Only Math is available
     }
     setSelectedSubject(subject);
     setActiveTab("lessons");
@@ -137,10 +138,11 @@ export const TutorDashboard = () => {
 
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="subjects">Subjects</TabsTrigger>
             <TabsTrigger value="lessons">{selectedSubject?.name || "Math"} Lessons</TabsTrigger>
+            <TabsTrigger value="upload">Photo Upload</TabsTrigger>
             <TabsTrigger value="chat">AI Tutor Chat</TabsTrigger>
           </TabsList>
 
@@ -294,7 +296,7 @@ export const TutorDashboard = () => {
           <TabsContent value="subjects" className="space-y-6">
             <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm font-medium text-blue-800">
-                📚 Mathematics and Science are available! English and Social Studies are under development.
+                📚 Mathematics is available! Science, English and Social Studies are under development.
               </p>
             </div>
             
@@ -303,7 +305,7 @@ export const TutorDashboard = () => {
                 <Card 
                   key={subject.id} 
                   className={`transition-shadow ${
-                    (subject.id === "math" || subject.id === "science") 
+                    subject.id === "math" 
                       ? "cursor-pointer hover:shadow-md" 
                       : "opacity-60 cursor-not-allowed"
                   }`}
@@ -312,17 +314,17 @@ export const TutorDashboard = () => {
                   <CardHeader>
                     <div className="flex items-center gap-3">
                       <div className={`w-12 h-12 ${subject.color} rounded-xl flex items-center justify-center`}>
-                        <subject.icon className={`w-6 h-6 ${(subject.id === "math" || subject.id === "science") ? "text-white" : "text-muted-foreground"}`} />
+                        <subject.icon className={`w-6 h-6 ${subject.id === "math" ? "text-white" : "text-muted-foreground"}`} />
                       </div>
                       <div className="flex-1">
                         <CardTitle className="text-lg flex items-center gap-2">
                           {subject.name}
-                          {(subject.id !== "math" && subject.id !== "science") && (
+                          {subject.id !== "math" && (
                             <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
                           )}
                         </CardTitle>
                         <CardDescription>
-                          {(subject.id === "math" || subject.id === "science") ? `${subject.progress}% Complete` : "Under Development"}
+                          {subject.id === "math" ? `${subject.progress}% Complete` : "Under Development"}
                         </CardDescription>
                       </div>
                     </div>
@@ -342,10 +344,10 @@ export const TutorDashboard = () => {
                     <Button 
                       className="w-full mt-4" 
                       onClick={() => handleSubjectSelect(subject)}
-                      disabled={subject.id !== "math" && subject.id !== "science"}
+                      disabled={subject.id !== "math"}
                     >
                       <MessageCircle className="w-4 h-4 mr-2" />
-                      {(subject.id === "math" || subject.id === "science") ? "Start Learning" : "Coming Soon"}
+                      {subject.id === "math" ? "Start Learning" : "Coming Soon"}
                     </Button>
                   </CardContent>
                 </Card>
@@ -392,6 +394,15 @@ export const TutorDashboard = () => {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="upload" className="space-y-6">
+            <PhotoUpload onAnalysisComplete={(results) => {
+              toast({
+                title: "Analysis Complete",
+                description: `Processing complete! Found ${results.totalQuestions} questions.`,
+              });
+            }} />
           </TabsContent>
 
           <TabsContent value="chat" className="space-y-6">
