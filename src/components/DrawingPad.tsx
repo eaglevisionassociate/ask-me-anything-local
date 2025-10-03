@@ -46,9 +46,14 @@ export const DrawingPad = ({ onSave, height = 400, width }: DrawingPadProps) => 
       backgroundColor: "#ffffff",
     });
 
-    // Initialize the freeDrawingBrush right after canvas creation
-    canvas.freeDrawingBrush.color = activeColor;
-    canvas.freeDrawingBrush.width = brushSize;
+    // Enable drawing mode first to initialize the freeDrawingBrush
+    canvas.isDrawingMode = true;
+    
+    // Now we can safely set brush properties
+    if (canvas.freeDrawingBrush) {
+      canvas.freeDrawingBrush.color = activeColor;
+      canvas.freeDrawingBrush.width = brushSize;
+    }
 
     setFabricCanvas(canvas);
 
