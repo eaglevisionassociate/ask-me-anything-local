@@ -6,11 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { useExercises, Exercise } from '@/hooks/useExercises';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
-import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer, Pencil } from 'lucide-react';
+import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatMathExpression } from '@/lib/fractionUtils';
 import { Fraction, renderMathExpression } from '@/components/ui/fraction';
-import { DrawingPad } from "./DrawingPad";
 
 interface ExerciseListProps {
   lessonId?: string;
@@ -28,7 +27,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
   const [submittedAnswers, setSubmittedAnswers] = useState<{ [key: string]: boolean }>({});
   const [answerFeedback, setAnswerFeedback] = useState<{ [key: string]: { isCorrect: boolean; feedback: string; explanationSteps?: string[] } }>({});
   const [fractionInput, setFractionInput] = useState<{ [key: string]: { numerator: string; denominator: string; isEditing: boolean } }>({});
-  const [showDrawing, setShowDrawing] = useState<{ [key: string]: boolean }>({});
 
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(selectedExercise === exercise.id ? null : exercise.id);
@@ -100,29 +98,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
     const currentAnswer = userAnswers[exerciseId] || '';
     const newAnswer = currentAnswer + ` ${operator} `;
     handleAnswerChange(exerciseId, newAnswer);
-  };
-
-  const isGeometryExercise = (question: string): boolean => {
-    const geometryKeywords = [
-      'draw', 'sketch', 'construct', 'diagram', 'angle', 'triangle', 
-      'rectangle', 'circle', 'square', 'polygon', 'line', 'point',
-      'perpendicular', 'parallel', 'bisector', 'median', 'altitude'
-    ];
-    return geometryKeywords.some(keyword => 
-      question.toLowerCase().includes(keyword.toLowerCase())
-    );
-  };
-
-  const handleDrawingSave = (exerciseId: string, dataURL: string) => {
-    // Here you could save the drawing or analyze it
-    // For now, just show a success message
-    setAnswerFeedback(prev => ({
-      ...prev,
-      [exerciseId]: {
-        isCorrect: true,
-        feedback: "Drawing saved! Great work on your geometric construction."
-      }
-    }));
   };
 
   const handleSubmitAnswer = async (exerciseId: string) => {
@@ -301,7 +276,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
     setSubmittedAnswers({});
     setAnswerFeedback({});
     setFractionInput({});
-    setShowDrawing({});
   };
 
   const handlePrintExercises = () => {
@@ -481,37 +455,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
 
             {selectedExercise === exercise.id && (
               <div className="space-y-4 border-t pt-4" onClick={(e) => e.stopPropagation()}>
-                
-                {/* Drawing Pad for Geometry Exercises */}
-                {isGeometryExercise(exercise.question) && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Pencil className="w-4 h-4" />
-                        <span className="text-sm font-medium">Drawing Pad (Geometry)</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowDrawing(prev => ({ 
-                          ...prev, 
-                          [exercise.id]: !prev[exercise.id] 
-                        }))}
-                      >
-                        {showDrawing[exercise.id] ? "Hide Drawing" : "Show Drawing"}
-                      </Button>
-                    </div>
-                    
-                    {showDrawing[exercise.id] && (
-                      <DrawingPad 
-                        height={300}
-                        width={500}
-                        onSave={(dataURL) => handleDrawingSave(exercise.id, dataURL)} 
-                      />
-                    )}
-                  </div>
-                )}
-
                 <div>
                   <label className="text-sm font-medium mb-2 block">Your Answer:</label>
                   <div className="space-y-2">
