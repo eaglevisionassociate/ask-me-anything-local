@@ -182,38 +182,76 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
         extractedText = result.data.text;
       }
 
-      // Simulate AI correction (in real app, this would call an AI service)
       const exercise = exercises.find(e => e.id === exerciseId);
       if (!exercise) return;
 
-      // For demo, assume correct if text contains numbers or key terms
-      const hasContent = extractedText.length > 10;
+      if (!extractedText || extractedText.trim().length < 2) {
+        setAnswerFeedback(prev => ({
+          ...prev,
+          [exerciseId]: {
+            isCorrect: false,
+            feedback: "⚠️ Could not detect clear answer in the image. Please ensure the photo is clear and try again.",
+            explanationSteps: ["No text could be extracted from the image"]
+          }
+        }));
+        
+        toast({
+          title: "Upload Failed",
+          description: "Please try with a clearer image",
+          variant: "destructive",
+        });
+        
+        return;
+      }
+
+      // Call AI to validate the answer
+      const validateResponse = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-answer`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({
+            studentAnswer: extractedText,
+            correctAnswer: exercise.answer,
+            question: exercise.question,
+          }),
+        }
+      );
+
+      if (!validateResponse.ok) {
+        throw new Error('Failed to validate answer');
+      }
+
+      const validation = await validateResponse.json();
       
       setAnswerFeedback(prev => ({
         ...prev,
         [exerciseId]: {
-          isCorrect: hasContent,
-          feedback: hasContent 
-            ? "✅ Work submitted! Your answer has been processed." 
-            : "⚠️ Could not detect clear answer in the image. Please ensure the photo is clear.",
-          explanationSteps: extractedText ? [`📝 Extracted text: ${extractedText.substring(0, 200)}...`] : undefined
+          isCorrect: validation.isCorrect,
+          feedback: validation.feedback || (validation.isCorrect ? "✅ Correct!" : "❌ Not quite right"),
+          explanationSteps: [
+            `📝 Extracted text: "${extractedText.substring(0, 200)}"`,
+            `✓ Correct answer: "${exercise.answer}"`,
+            `💡 ${validation.explanation || ''}`
+          ]
         }
       }));
 
       setSubmittedAnswers(prev => ({ ...prev, [exerciseId]: true }));
 
       toast({
-        title: "Upload Processed",
-        description: hasContent ? "Your work has been analyzed" : "Please try with a clearer image",
+        title: validation.isCorrect ? "Correct! 🎉" : "Not Quite Right",
+        description: validation.feedback,
       });
 
-      if (hasContent) {
-        await completeExercise(
-          `${exercise.question.substring(0, 30)}...`,
-          80,
-          'Mathematics'
-        );
-      }
+      await completeExercise(
+        `${exercise.question.substring(0, 30)}...`,
+        validation.score || (validation.isCorrect ? 100 : 0),
+        'Mathematics'
+      );
       
     } catch (error) {
       console.error('Processing error:', error);
