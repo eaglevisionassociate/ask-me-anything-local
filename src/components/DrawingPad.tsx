@@ -21,7 +21,7 @@ interface DrawingPadProps {
   width?: number;
 }
 
-export const DrawingPad = ({ onSave, height = 400, width = 600 }: DrawingPadProps) => {
+export const DrawingPad = ({ onSave, height = 400, width }: DrawingPadProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
   const [activeColor, setActiveColor] = useState("#000000");
@@ -36,8 +36,12 @@ export const DrawingPad = ({ onSave, height = 400, width = 600 }: DrawingPadProp
   useEffect(() => {
     if (!canvasRef.current) return;
 
+    // Calculate responsive width
+    const containerWidth = canvasRef.current.parentElement?.clientWidth || 600;
+    const canvasWidth = width || Math.min(containerWidth - 32, 600); // 32px for padding
+
     const canvas = new FabricCanvas(canvasRef.current, {
-      width: width,
+      width: canvasWidth,
       height: height,
       backgroundColor: "#ffffff",
     });

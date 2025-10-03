@@ -41,6 +41,14 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
         [exercise.id]: { numerator: '', denominator: '', isEditing: false }
       }));
     }
+    
+    // Auto-show drawing pad for geometry exercises
+    if (isGeometryExercise(exercise.question) && !showDrawing[exercise.id]) {
+      setShowDrawing(prev => ({
+        ...prev,
+        [exercise.id]: true
+      }));
+    }
   };
 
   const handleAnswerChange = (exerciseId: string, answer: string) => {
@@ -484,11 +492,11 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
                 
                 {/* Drawing Pad for Geometry Exercises */}
                 {isGeometryExercise(exercise.question) && (
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
+                  <div className="space-y-3 bg-primary/5 p-4 rounded-lg border-2 border-primary/20">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
                       <div className="flex items-center gap-2">
-                        <Pencil className="w-4 h-4" />
-                        <span className="text-sm font-medium">Drawing Pad (Geometry)</span>
+                        <Pencil className="w-5 h-5 text-primary" />
+                        <span className="text-sm font-semibold text-primary">✏️ Use Drawing Pad Below</span>
                       </div>
                       <Button
                         variant="outline"
@@ -503,11 +511,12 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
                     </div>
                     
                     {showDrawing[exercise.id] && (
-                      <DrawingPad 
-                        height={300}
-                        width={500}
-                        onSave={(dataURL) => handleDrawingSave(exercise.id, dataURL)} 
-                      />
+                      <div className="w-full">
+                        <DrawingPad 
+                          height={300}
+                          onSave={(dataURL) => handleDrawingSave(exercise.id, dataURL)} 
+                        />
+                      </div>
                     )}
                   </div>
                 )}
