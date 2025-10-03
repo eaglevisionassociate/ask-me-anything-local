@@ -63,21 +63,17 @@ export const DrawingPad = ({ onSave, height = 400, width }: DrawingPadProps) => 
   }, [width, height]);
 
   useEffect(() => {
-    if (!fabricCanvas) return;
+    if (!fabricCanvas || !fabricCanvas.freeDrawingBrush) return;
 
-    fabricCanvas.isDrawingMode = activeTool === "draw";
+    // Enable drawing mode for draw and erase tools
+    fabricCanvas.isDrawingMode = activeTool === "draw" || activeTool === "erase";
     
-    if (activeTool === "draw" && fabricCanvas.freeDrawingBrush) {
+    if (activeTool === "draw") {
       fabricCanvas.freeDrawingBrush.color = activeColor;
       fabricCanvas.freeDrawingBrush.width = brushSize;
-    }
-
-    if (activeTool === "erase") {
-      fabricCanvas.isDrawingMode = true;
-      if (fabricCanvas.freeDrawingBrush) {
-        fabricCanvas.freeDrawingBrush.color = "#ffffff";
-        fabricCanvas.freeDrawingBrush.width = brushSize * 2;
-      }
+    } else if (activeTool === "erase") {
+      fabricCanvas.freeDrawingBrush.color = "#ffffff";
+      fabricCanvas.freeDrawingBrush.width = brushSize * 2;
     }
   }, [activeTool, activeColor, brushSize, fabricCanvas]);
 
