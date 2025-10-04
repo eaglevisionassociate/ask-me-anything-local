@@ -14,6 +14,7 @@ import { Fraction, renderMathExpression } from '@/components/ui/fraction';
 import { DrawingPad } from "./DrawingPad";
 import { useToast } from "@/hooks/use-toast";
 import Tesseract from 'tesseract.js';
+import { usePuterAI } from '@/hooks/usePuterAI';
 
 interface ExerciseListProps {
   lessonId?: string;
@@ -27,6 +28,7 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
   const { completeExercise } = useActivityTracking();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const puterAI = usePuterAI();
   
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
@@ -204,28 +206,58 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
         return;
       }
 
-      // Call AI to validate the answer
-      const validateResponse = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/validate-answer`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          },
-          body: JSON.stringify({
-            studentAnswer: extractedText,
-            correctAnswer: exercise.answer,
-            question: exercise.question,
-          }),
-        }
-      );
-
-      if (!validateResponse.ok) {
-        throw new Error('Failed to validate answer');
+      // Check if Puter AI is ready
+      if (!puterAI.isPuterReady()) {
+        toast({
+          title: "Puter AI Not Ready",
+          description: "Please wait for Puter AI to load and try again.",
+          variant: "destructive",
+        });
+        return;
       }
 
-      const validation = await validateResponse.json();
+      // Use Puter AI to validate the answer
+      const validationPrompt = `You are a helpful math tutor evaluating a student's answer. Compare the student's answer with the correct answer.
+
+Be flexible in your evaluation:
+- Accept mathematically equivalent answers (e.g., 1/2 = 0.5 = 50%)
+- Ignore minor formatting differences
+- Accept answers in different units if they're equivalent
+- Consider partial credit for partially correct answers
+
+Question: ${exercise.question}
+Correct Answer: ${exercise.answer}
+Student's Answer: ${extractedText}
+
+Respond ONLY with valid JSON in this exact format:
+{
+  "isCorrect": true/false,
+  "score": 0-100,
+  "feedback": "brief encouraging feedback",
+  "explanation": "why the answer is correct/incorrect"
+}`;
+
+      const aiResponse = await puterAI.generateResponse(validationPrompt);
+      
+      // Parse the AI response
+      let validation;
+      try {
+        // Try to extract JSON from the response
+        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          validation = JSON.parse(jsonMatch[0]);
+        } else {
+          throw new Error('No JSON found in response');
+        }
+      } catch (parseError) {
+        console.error('Failed to parse Puter AI response:', parseError);
+        toast({
+          title: "Validation Error",
+          description: "Could not parse AI response. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
       
       setAnswerFeedback(prev => ({
         ...prev,

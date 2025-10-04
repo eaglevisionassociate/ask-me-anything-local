@@ -105,5 +105,6 @@ export const usePuterAI = () => {
     selectedModel,
     changeModel,
     isPuterReady,
+    generateResponse,
   };
 };
