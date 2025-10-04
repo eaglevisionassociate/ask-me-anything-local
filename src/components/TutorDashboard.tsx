@@ -106,28 +106,28 @@ export const TutorDashboard = () => {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
                 <Brain className="w-6 h-6 text-primary-foreground" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-foreground">Grade 8 AI Tutor</h1>
-                <p className="text-sm text-muted-foreground">Your personalized learning companion</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground">Grade 8 AI Tutor</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground">Your personalized learning companion</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
               <div className="flex items-center gap-2">
                 <Trophy className="w-5 h-5 text-yellow-500" />
-                <span className="font-semibold">
+                <span className="font-semibold text-sm sm:text-base">
                   {loading ? <Skeleton className="h-4 w-16" /> : `${profile?.total_xp || 0} XP`}
                 </span>
               </div>
-              <div className="text-sm text-muted-foreground">
+              <div className="text-xs sm:text-sm text-muted-foreground truncate max-w-[200px] sm:max-w-none">
                 {loading ? <Skeleton className="h-4 w-20" /> : `Welcome, ${profile?.display_name || user?.email || 'Student'}!`}
               </div>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              <Button variant="ghost" size="sm" onClick={handleSignOut} className="self-start sm:self-auto">
                 <LogOut className="w-4 h-4 mr-2" />
                 Sign Out
               </Button>
@@ -138,13 +138,15 @@ export const TutorDashboard = () => {
 
       <main className="container mx-auto px-4 py-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-            <TabsTrigger value="subjects">Subjects</TabsTrigger>
-            <TabsTrigger value="lessons">{selectedSubject?.name || "Math"} Lessons</TabsTrigger>
-            <TabsTrigger value="upload">Photo Upload</TabsTrigger>
-            <TabsTrigger value="chat">AI Tutor Chat</TabsTrigger>
-          </TabsList>
+          <div className="overflow-x-auto -mx-4 px-4">
+            <TabsList className="inline-flex w-full sm:grid sm:grid-cols-5 min-w-max sm:min-w-0">
+              <TabsTrigger value="dashboard" className="whitespace-nowrap">Dashboard</TabsTrigger>
+              <TabsTrigger value="subjects" className="whitespace-nowrap">Subjects</TabsTrigger>
+              <TabsTrigger value="lessons" className="whitespace-nowrap">{selectedSubject?.name || "Math"} Lessons</TabsTrigger>
+              <TabsTrigger value="upload" className="whitespace-nowrap">Photo Upload</TabsTrigger>
+              <TabsTrigger value="chat" className="whitespace-nowrap">AI Tutor Chat</TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="dashboard" className="space-y-6">
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
