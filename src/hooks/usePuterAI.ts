@@ -22,7 +22,7 @@ export const usePuterAI = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<'claude-sonnet-4' | 'claude-opus-4'>('claude-sonnet-4');
 
-  const generateResponse = useCallback(async (userMessage: string) => {
+  const generateResponse = useCallback(async (userMessage: string): Promise<string> => {
     if (!window.puter) {
       throw new Error('Puter.js not loaded. Please refresh the page.');
     }

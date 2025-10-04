@@ -28,7 +28,7 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
   const { completeExercise } = useActivityTracking();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const puterAI = usePuterAI();
+  const { generateResponse: generatePuterResponse, isPuterReady } = usePuterAI();
   
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
@@ -207,7 +207,7 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
       }
 
       // Check if Puter AI is ready
-      if (!puterAI.isPuterReady()) {
+      if (!isPuterReady()) {
         toast({
           title: "Puter AI Not Ready",
           description: "Please wait for Puter AI to load and try again.",
@@ -237,7 +237,7 @@ Respond ONLY with valid JSON in this exact format:
   "explanation": "why the answer is correct/incorrect"
 }`;
 
-      const aiResponse = await puterAI.generateResponse(validationPrompt);
+      const aiResponse = await generatePuterResponse(validationPrompt);
       
       // Parse the AI response
       let validation;
