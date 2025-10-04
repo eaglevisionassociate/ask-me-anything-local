@@ -205,17 +205,8 @@ Please provide educational, age-appropriate explanations that would help a Grade
                   {tutorContext ? `Welcome to ${tutorContext.name} Tutoring` : 'Welcome to Puter AI Chat'}
                 </h2>
                 <p className="text-muted-foreground max-w-md mb-4">
-                  {tutorContext && tutorContext.id === "math"
-                    ? `I'm your Grade 8 Mathematics tutor! I can help you with ${tutorContext.topics.join(', ')}, correct your exercises, and create new practice problems. Just ask!`
-                    : tutorContext 
-                    ? `I'm here to help you learn ${tutorContext.name}! Ask me about ${tutorContext.topics.join(', ')}, or any other questions you have.`
-                    : 'Start a conversation with Claude Sonnet 4 or Claude Opus 4. Completely free with no API keys required!'
-                  }
+                  Connected to Elton Niati AI agent
                 </p>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  Connected to Puter.js • Ready to chat
-                </div>
               </div>
             )}
 
