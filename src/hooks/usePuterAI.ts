@@ -7,6 +7,17 @@ interface Message {
   timestamp: Date;
 }
 
+interface UsePuterAIReturn {
+  messages: Message[];
+  sendMessage: (content: string) => Promise<void>;
+  clearChat: () => void;
+  isLoading: boolean;
+  selectedModel: 'claude-sonnet-4' | 'claude-opus-4';
+  changeModel: (model: 'claude-sonnet-4' | 'claude-opus-4') => void;
+  isPuterReady: () => boolean;
+  generateResponse: (userMessage: string) => Promise<string>;
+}
+
 declare global {
   interface Window {
     puter: {
@@ -17,7 +28,7 @@ declare global {
   }
 }
 
-export const usePuterAI = () => {
+export const usePuterAI = (): UsePuterAIReturn => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState<'claude-sonnet-4' | 'claude-opus-4'>('claude-sonnet-4');
@@ -93,8 +104,8 @@ export const usePuterAI = () => {
     setSelectedModel(model);
   }, []);
 
-  const isPuterReady = useCallback(() => {
-    return typeof window !== 'undefined' && window.puter && window.puter.ai;
+  const isPuterReady = useCallback((): boolean => {
+    return !!(typeof window !== 'undefined' && window.puter && window.puter.ai);
   }, []);
 
   return {
