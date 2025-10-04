@@ -202,7 +202,7 @@ Please provide educational, age-appropriate explanations that would help a Grade
                   <Brain className="w-8 h-8 text-primary-foreground" />
                 </div>
                 <h2 className="text-2xl font-semibold text-foreground mb-2">
-                  {tutorContext ? `Welcome to ${tutorContext.name} Tutoring` : 'Welcome to Puter AI Chat'}
+                  {tutorContext ? `Welcome to ${tutorContext.name} Tutoring` : 'Welcome to Joy and Friends AI Chat'}
                 </h2>
                 <p className="text-muted-foreground max-w-md mb-4">
                   Connected to Elton Niati AI agent
