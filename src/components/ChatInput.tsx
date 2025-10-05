@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { MathInput } from "@/components/MathInput";
 import { Send, Loader2 } from "lucide-react";
 
 interface ChatInputProps {
@@ -29,19 +29,19 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-3 items-end">
-      <Textarea
+    <form onSubmit={handleSubmit} className="flex gap-3 items-start">
+      <MathInput
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
+        onChange={setMessage}
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
-        className="min-h-[50px] max-h-32 resize-none bg-input border-border focus:ring-2 focus:ring-accent focus:border-transparent transition-smooth"
         disabled={isLoading || disabled}
+        className="flex-1"
       />
       <Button
         type="submit"
         disabled={!message.trim() || isLoading || disabled}
-        className="h-[50px] px-4 bg-primary hover:opacity-90 transition-smooth shadow-glow"
+        className="h-[60px] px-4 bg-primary hover:opacity-90 transition-smooth shadow-glow"
       >
         {isLoading ? (
           <Loader2 className="w-5 h-5 animate-spin" />
