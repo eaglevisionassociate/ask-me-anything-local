@@ -46,19 +46,38 @@ export const StepByStepMath = ({
       return '\\text{...}';
     }
 
-    let latex = input;
+    let latex = input.trim();
     
-    // Handle fractions - both (num)/(den) and num/den
-    latex = latex.replace(/(\d+\.?\d*|\([^)]+\))\/(\d+\.?\d*|\([^)]+\))/g, '\\frac{$1}{$2}');
+    // Enhanced fraction handling for complex expressions
+    // First, handle fractions with parentheses: (expression)/(expression)
+    latex = latex.replace(/\(([^()]+)\)\s*\/\s*\(([^()]+)\)/g, '\\frac{$1}{$2}');
+    
+    // Handle fractions without parentheses but with complex expressions
+    // This regex matches expressions containing +, -, *, numbers, and spaces around /
+    latex = latex.replace(/([^\s\/\+\-]+?(?:\s*[\+\-\*]\s*[^\s\/\+\-]+?)*)\s*\/\s*([^\s\/\+\-]+?(?:\s*[\+\-\*]\s*[^\s\/\+\-]+?)*)/g, (match, numerator, denominator) => {
+      // If numerator or denominator contains operators, wrap them in parentheses
+      const hasOperators = /[\+\-\*]/.test(numerator) || /[\+\-\*]/.test(denominator);
+      if (hasOperators) {
+        return `\\frac{${numerator}}{${denominator}}`;
+      }
+      return match; // Return original if no operators (will be caught by simpler fraction handler)
+    });
+    
+    // Handle simple fractions: number/number
+    latex = latex.replace(/(\d+\.?\d*)\s*\/\s*(\d+\.?\d*)/g, '\\frac{$1}{$2}');
     
     // Handle square root
     latex = latex.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
     
-    // Handle powers
-    latex = latex.replace(/(\d+|\w+)\^(\d+|\w+|\([^)]+\))/g, '$1^{$2}');
+    // Handle powers with better expression support
+    latex = latex.replace(/(\d+|[a-zA-Z]|\([^)]+\))\s*\^\s*(\d+|[a-zA-Z]|\([^)]+\))/g, '$1^{$2}');
     
-    // Replace * with times
-    latex = latex.replace(/\*/g, '\\times');
+    // Replace * with \times for multiplication
+    latex = latex.replace(/\*/g, '\\times ');
+    
+    // Add spaces around operators for better readability
+    latex = latex.replace(/([\+\-\*])(?=\S)/g, '$1 ');
+    latex = latex.replace(/(?<=\S)([\+\-\*])/g, ' $1');
     
     return latex;
   };
@@ -123,14 +142,37 @@ export const StepByStepMath = ({
           
           <div className="bg-gray-50 rounded-lg p-4 mb-4 text-sm text-gray-600 border">
             <strong className="text-blue-600">Quick tips:</strong> 
-            <div className="mt-1 flex flex-wrap gap-2">
-              <span>Use</span>
-              <code className="bg-white px-2 py-1 rounded border text-sm">23/12</code>
-              <span>for fractions,</span>
-              <code className="bg-white px-2 py-1 rounded border text-sm">2^4</code>
-              <span>for powers,</span>
-              <code className="bg-white px-2 py-1 rounded border text-sm">sqrt(16)</code>
-              <span>for square roots</span>
+            <div className="mt-2 space-y-1">
+              <div className="flex flex-wrap items-center gap-1">
+                <span>Fractions:</span>
+                <code className="bg-white px-2 py-1 rounded border text-sm">12+2 / 26-2</code>
+                <span>or</span>
+                <code className="bg-white px-2 py-1 rounded border text-sm">(12+2)/(26-2)</code>
+                <span>→</span>
+                <span className="text-xs">\(\frac{12+2}{26-2}\)</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1">
+                <span>Powers:</span>
+                <code className="bg-white px-2 py-1 rounded border text-sm">2^4</code>
+                <span>or</span>
+                <code className="bg-white px-2 py-1 rounded border text-sm">(x+1)^2</code>
+                <span>→</span>
+                <span className="text-xs">\(2^{4}\) or \((x+1)^{2}\)</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1">
+                <span>Square roots:</span>
+                <code className="bg-white px-2 py-1 rounded border text-sm">sqrt(16)</code>
+                <span>or</span>
+                <code className="bg-white px-2 py-1 rounded border text-sm">sqrt(25-9)</code>
+                <span>→</span>
+                <span className="text-xs">\(\sqrt{16}\) or \(\sqrt{25-9}\)</span>
+              </div>
+              <div className="flex flex-wrap items-center gap-1">
+                <span>Multiplication:</span>
+                <code className="bg-white px-2 py-1 rounded border text-sm">2*3</code>
+                <span>→</span>
+                <span className="text-xs">\(2 \times 3\)</span>
+              </div>
             </div>
           </div>
 
@@ -142,7 +184,7 @@ export const StepByStepMath = ({
                     {index + 1}
                   </div>
                   
-                  <div className="flex-1">
+                  <div className="flex-1 space-y-2">
                     <input
                       type="text"
                       className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -155,7 +197,7 @@ export const StepByStepMath = ({
                     
                     {step.input && (
                       <div 
-                        className="mt-2 p-2 bg-gray-50 rounded border min-h-[2rem] text-gray-700"
+                        className="p-2 bg-gray-50 rounded border min-h-[2rem] text-gray-700 flex items-center"
                         dangerouslySetInnerHTML={{ 
                           __html: `\\(${convertToLatex(step.input)}\\)` 
                         }}
