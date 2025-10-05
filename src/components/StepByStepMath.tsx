@@ -63,7 +63,12 @@ export const StepByStepMath = ({
     
     // Add content before fraction
     if (hasBefore) {
-      latex += step.beforeFraction.trim();
+      let before = step.beforeFraction.trim();
+      // Convert expressions in before part
+      before = before.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
+      before = before.replace(/(\d+|[a-zA-Z])\s*\^\s*(\d+|[a-zA-Z])/g, '$1^{$2}');
+      before = before.replace(/\*/g, '\\times ');
+      latex += before;
     }
     
     // Add fraction if exists
@@ -81,19 +86,18 @@ export const StepByStepMath = ({
     
     // Add content after fraction
     if (hasAfter) {
+      let after = step.afterFraction.trim();
+      // Convert expressions in after part
+      after = after.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
+      after = after.replace(/(\d+|[a-zA-Z])\s*\^\s*(\d+|[a-zA-Z])/g, '$1^{$2}');
+      after = after.replace(/\*/g, '\\times ');
+      
       if (latex) {
-        latex += ` ${step.afterFraction.trim()}`;
+        latex += ` ${after}`;
       } else {
-        latex = step.afterFraction.trim();
+        latex = after;
       }
     }
-
-    // Handle conversions for all parts
-    latex = latex.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
-    latex = latex.replace(/(\d+|[a-zA-Z]|\([^)]+\))\s*\^\s*(\d+|[a-zA-Z]|\([^)]+\))/g, '$1^{$2}');
-    latex = latex.replace(/\*/g, '\\times ');
-    latex = latex.replace(/([\+\-\*])(?=\S)/g, '$1 ');
-    latex = latex.replace(/(?<=\S)([\+\-\*])/g, ' $1');
 
     return latex;
   };
@@ -150,7 +154,7 @@ export const StepByStepMath = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent, stepId: number, field: string) => {
+  const handleKeyPress = (e: React.KeyboardEvent, stepId: number) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const currentIndex = steps.findIndex(s => s.id === stepId);
@@ -188,9 +192,6 @@ export const StepByStepMath = ({
               <div className="flex items-center gap-2">
                 <span>3. Type what comes <strong>after</strong> the fraction</span>
               </div>
-              <div className="flex items-center gap-2 text-xs text-blue-600">
-                <span>Example: "2 + " [fraction] " * 5" becomes "2 + \frac{a}{b} \times 5"</span>
-              </div>
             </div>
           </div>
 
@@ -206,7 +207,7 @@ export const StepByStepMath = ({
                     {/* Before Fraction */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Before Fraction (optional)
+                        Before Fraction
                       </label>
                       <input
                         type="text"
@@ -214,7 +215,7 @@ export const StepByStepMath = ({
                         placeholder="e.g., 2 + "
                         value={step.beforeFraction}
                         onChange={(e) => updateStep(step.id, 'beforeFraction', e.target.value)}
-                        onKeyPress={(e) => handleKeyPress(e, step.id, 'beforeFraction')}
+                        onKeyPress={(e) => handleKeyPress(e, step.id)}
                         autoFocus={index === steps.length - 1}
                       />
                     </div>
@@ -264,7 +265,7 @@ export const StepByStepMath = ({
                     {/* After Fraction */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        After Fraction (optional)
+                        After Fraction
                       </label>
                       <input
                         type="text"
@@ -272,7 +273,7 @@ export const StepByStepMath = ({
                         placeholder="e.g.,  * 5 + 3"
                         value={step.afterFraction}
                         onChange={(e) => updateStep(step.id, 'afterFraction', e.target.value)}
-                        onKeyPress={(e) => handleKeyPress(e, step.id, 'afterFraction')}
+                        onKeyPress={(e) => handleKeyPress(e, step.id)}
                       />
                     </div>
 
