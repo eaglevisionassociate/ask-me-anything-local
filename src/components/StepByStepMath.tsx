@@ -8,7 +8,7 @@ interface MathStep {
   input: string;
   numerator: string;
   denominator: string;
-  useFraction: boolean;
+  hasFraction: boolean;
 }
 
 interface StepByStepMathProps {
@@ -30,7 +30,7 @@ export const StepByStepMath = ({
   onSubmit,
   placeholder = "Type your step..."
 }: StepByStepMathProps) => {
-  const [steps, setSteps] = useState<MathStep[]>([{ id: 0, input: "", numerator: "", denominator: "", useFraction: false }]);
+  const [steps, setSteps] = useState<MathStep[]>([{ id: 0, input: "", numerator: "", denominator: "", hasFraction: false }]);
   const [stepCounter, setStepCounter] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -43,22 +43,22 @@ export const StepByStepMath = ({
   }, [steps]);
 
   const convertToLatex = (step: MathStep): string => {
-    if (!step.input.trim() && !step.useFraction) {
+    if (!step.input.trim() && !step.hasFraction) {
       return '\\text{...}';
     }
 
     let latex = step.input.trim();
     
-    // Replace [FRACTION] placeholder with actual fraction
-    if (step.useFraction) {
+    // If fraction exists, convert it and insert properly
+    if (step.hasFraction && (step.numerator || step.denominator)) {
       const numerator = step.numerator || '?';
       const denominator = step.denominator || '?';
       const fraction = `\\frac{${numerator}}{${denominator}}`;
       
-      if (latex.includes('[FRACTION]')) {
-        latex = latex.replace('[FRACTION]', fraction);
+      // If there's already input, combine them naturally
+      if (latex) {
+        latex = `${latex} ${fraction}`;
       } else {
-        // If no placeholder, just use the fraction
         latex = fraction;
       }
     }
@@ -74,7 +74,7 @@ export const StepByStepMath = ({
   };
 
   const addStep = () => {
-    setSteps([...steps, { id: stepCounter, input: "", numerator: "", denominator: "", useFraction: false }]);
+    setSteps([...steps, { id: stepCounter, input: "", numerator: "", denominator: "", hasFraction: false }]);
     setStepCounter(stepCounter + 1);
   };
 
@@ -91,27 +91,13 @@ export const StepByStepMath = ({
   };
 
   const toggleFraction = (id: number) => {
-    setSteps(steps.map(step => {
-      if (step.id === id) {
-        const useFraction = !step.useFraction;
-        let newInput = step.input;
-        
-        if (useFraction && !step.input.includes('[FRACTION]')) {
-          // Add placeholder if not already there
-          newInput = step.input ? step.input + ' [FRACTION]' : '[FRACTION]';
-        } else if (!useFraction) {
-          // Remove placeholder
-          newInput = step.input.replace(/\[FRACTION\]/g, '').trim();
-        }
-        
-        return { ...step, useFraction, input: newInput };
-      }
-      return step;
-    }));
+    setSteps(steps.map(step => 
+      step.id === id ? { ...step, hasFraction: !step.hasFraction } : step
+    ));
   };
 
   const clearAll = () => {
-    setSteps([{ id: stepCounter, input: "", numerator: "", denominator: "", useFraction: false }]);
+    setSteps([{ id: stepCounter, input: "", numerator: "", denominator: "", hasFraction: false }]);
     setStepCounter(stepCounter + 1);
   };
 
@@ -155,16 +141,22 @@ export const StepByStepMath = ({
             <strong className="text-blue-600">How to use:</strong> 
             <div className="mt-2 space-y-2">
               <div className="flex items-center gap-2">
-                <span>• Type your expression in the main input</span>
+                <span>• Type your main expression in the input field</span>
               </div>
               <div className="flex items-center gap-2">
-                <span>• Use <code className="bg-white px-2 py-1 rounded border text-sm">sqrt(16)</code>, <code className="bg-white px-2 py-1 rounded border text-sm">2^4</code>, etc.</span>
+                <span>• Check "Include Fraction" if you need a fraction</span>
               </div>
               <div className="flex items-center gap-2">
-                <span>• Check "Add Fraction" and fill numerator/denominator to insert a fraction</span>
+                <span>• Fill numerator and denominator</span>
               </div>
               <div className="flex items-center gap-2">
-                <span>• The fraction will appear where you put <code className="bg-white px-2 py-1 rounded border text-sm">[FRACTION]</code> in your expression</span>
+                <span>• The fraction will be added to your expression automatically</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span>• Examples: </span>
+                <code className="bg-white px-2 py-1 rounded border text-sm">2 + </code>
+                <span>+ fraction </span>
+                <code className="bg-white px-2 py-1 rounded border text-sm">* 5</code>
               </div>
             </div>
           </div>
@@ -178,15 +170,15 @@ export const StepByStepMath = ({
                   </div>
                   
                   <div className="flex-1 space-y-3">
-                    {/* Main input */}
+                    {/* Main input - you can type anything here */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Step Expression
+                        Step {index + 1}
                       </label>
                       <input
                         type="text"
                         className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="e.g., 2 + [FRACTION] * sqrt(16)"
+                        placeholder="Type your expression here... e.g., 2 + sqrt(16) * 5"
                         value={step.input}
                         onChange={(e) => updateStep(step.id, 'input', e.target.value)}
                         onKeyPress={(e) => handleKeyPress(e, step.id)}
@@ -194,28 +186,28 @@ export const StepByStepMath = ({
                       />
                     </div>
 
-                    {/* Fraction toggle and inputs */}
-                    <div className="flex items-start gap-3">
-                      <div className="flex items-center gap-2">
+                    {/* Fraction section - optional */}
+                    <div className="border-t pt-3">
+                      <div className="flex items-center gap-3 mb-3">
                         <input
                           type="checkbox"
                           id={`fraction-${step.id}`}
-                          checked={step.useFraction}
+                          checked={step.hasFraction}
                           onChange={() => toggleFraction(step.id)}
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
                         <label htmlFor={`fraction-${step.id}`} className="text-sm font-medium text-gray-700">
-                          Add Fraction
+                          Include a fraction in this step
                         </label>
                       </div>
                       
-                      {step.useFraction && (
-                        <div className="flex-1 grid grid-cols-2 gap-3">
+                      {step.hasFraction && (
+                        <div className="grid grid-cols-2 gap-3 pl-7">
                           <div>
-                            <label className="block text-xs text-gray-500 mb-1">Numerator</label>
+                            <label className="block text-xs text-gray-500 mb-1">Numerator (top)</label>
                             <input
                               type="text"
-                              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                               placeholder="e.g., 12+2"
                               value={step.numerator}
                               onChange={(e) => updateStep(step.id, 'numerator', e.target.value)}
@@ -223,10 +215,10 @@ export const StepByStepMath = ({
                           </div>
                           
                           <div>
-                            <label className="block text-xs text-gray-500 mb-1">Denominator</label>
+                            <label className="block text-xs text-gray-500 mb-1">Denominator (bottom)</label>
                             <input
                               type="text"
-                              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                              className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500"
                               placeholder="e.g., 26-2"
                               value={step.denominator}
                               onChange={(e) => updateStep(step.id, 'denominator', e.target.value)}
@@ -236,11 +228,11 @@ export const StepByStepMath = ({
                       )}
                     </div>
 
-                    {/* Preview */}
-                    {(step.input || (step.useFraction && (step.numerator || step.denominator))) && (
-                      <div>
+                    {/* Preview shows exactly what you'll get */}
+                    {(step.input || step.hasFraction) && (
+                      <div className="border-t pt-3">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Step Preview
+                          Preview
                         </label>
                         <div 
                           className="p-3 bg-gray-50 rounded border min-h-[3rem] text-gray-700 flex items-center justify-center text-lg"
@@ -248,6 +240,9 @@ export const StepByStepMath = ({
                             __html: `\\(${convertToLatex(step)}\\)` 
                           }}
                         />
+                        <div className="text-xs text-gray-500 mt-1">
+                          Your expression + fraction will be combined
+                        </div>
                       </div>
                     )}
                   </div>
@@ -293,7 +288,7 @@ export const StepByStepMath = ({
               type="button"
               onClick={handleSubmit}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={steps.every(step => !step.input.trim() && !step.useFraction)}
+              disabled={steps.every(step => !step.input.trim() && !step.hasFraction)}
             >
               <Send className="h-4 w-4 mr-2" />
               Submit Work
