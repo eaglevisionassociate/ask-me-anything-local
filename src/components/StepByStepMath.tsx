@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, X, Send, Trash2, Fraction } from "lucide-react";
+import { Plus, X, Send, Trash2, Divide } from "lucide-react";
 
 interface MathStep {
   id: number;
@@ -54,7 +54,9 @@ export const StepByStepMath = ({
 
     // Replace fraction placeholders with actual fractions
     step.fractions.forEach((fraction, index) => {
-      const fractionLatex = `\\frac{${fraction.numerator || '?'}}{${fraction.denominator || '?'}}`;
+      const numerator = fraction.numerator || '?';
+      const denominator = fraction.denominator || '?';
+      const fractionLatex = `\\frac{${numerator}}{${denominator}}`;
       const placeholder = `[fraction${fraction.id}]`;
       
       if (latex.includes(placeholder)) {
@@ -98,13 +100,8 @@ export const StepByStepMath = ({
         const newFractionId = fractionCounter;
         setFractionCounter(fractionCounter + 1);
         
-        // Add placeholder in the main input
-        const placeholder = `[fraction${newFractionId}]`;
-        const newInput = step.input ? step.input + ' + ' + placeholder : placeholder;
-        
         return {
           ...step,
-          input: newInput,
           fractions: [...step.fractions, { 
             id: newFractionId, 
             numerator: '', 
@@ -133,14 +130,8 @@ export const StepByStepMath = ({
   const deleteFraction = (stepId: number, fractionId: number) => {
     setSteps(steps.map(step => {
       if (step.id === stepId) {
-        // Remove the fraction placeholder from input
-        const placeholder = `[fraction${fractionId}]`;
-        let newInput = step.input.replace(new RegExp(`\\s*\\+\\s*${placeholder}|${placeholder}\\s*\\+\\s*|${placeholder}`, 'g'), '');
-        newInput = newInput.replace(/\+\s*\+/g, '+').replace(/^\s*\+\s*|\s*\+\s*$/g, '');
-        
         return {
           ...step,
-          input: newInput,
           fractions: step.fractions.filter(f => f.id !== fractionId)
         };
       }
@@ -151,15 +142,14 @@ export const StepByStepMath = ({
   const clearAll = () => {
     setSteps([{ id: stepCounter, input: "", fractions: [] }]);
     setStepCounter(stepCounter + 1);
+    setFractionCounter(1);
   };
 
   const handleSubmit = () => {
     const filledSteps = steps
       .map(step => {
-        if (step.input.trim() || step.fractions.some(f => f.numerator || f.denominator)) {
-          return convertToLatex(step).replace(/\\text\{\.\.\.\}/g, '').trim();
-        }
-        return '';
+        const stepLatex = convertToLatex(step).replace(/\\text\{\.\.\.\}/g, '').trim();
+        return stepLatex;
       })
       .filter(s => s.length > 0);
     
@@ -195,19 +185,15 @@ export const StepByStepMath = ({
           </div>
           
           <div className="bg-gray-50 rounded-lg p-4 mb-4 text-sm text-gray-600 border">
-            <strong className="text-blue-600">How to use fractions:</strong> 
+            <strong className="text-blue-600">How to use:</strong> 
             <div className="mt-2 space-y-2">
-              <div className="flex flex-wrap items-center gap-1">
-                <span>1. Click "Add Fraction" to create a fraction</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-1">
-                <span>2. Enter numerator (top) and denominator (bottom)</span>
-              </div>
-              <div className="flex flex-wrap items-center gap-1">
-                <span>3. Use the main input for other operations: </span>
+              <div className="flex items-center gap-2">
+                <span>• Use main input for expressions like:</span>
                 <code className="bg-white px-2 py-1 rounded border text-sm">sqrt(16)</code>
                 <code className="bg-white px-2 py-1 rounded border text-sm">2^4</code>
-                <code className="bg-white px-2 py-1 rounded border text-sm">2*3</code>
+              </div>
+              <div className="flex items-center gap-2">
+                <span>• Click "Add Fraction" to create fractions with separate numerator/denominator inputs</span>
               </div>
             </div>
           </div>
@@ -229,7 +215,7 @@ export const StepByStepMath = ({
                       <input
                         type="text"
                         className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="e.g., 2 + sqrt(16) + [fractions will appear here]"
+                        placeholder="e.g., 2 + sqrt(16) or leave empty to use only fractions"
                         value={step.input}
                         onChange={(e) => updateStep(step.id, e.target.value)}
                         onKeyPress={(e) => handleKeyPress(e, step.id)}
@@ -250,55 +236,72 @@ export const StepByStepMath = ({
                           onClick={() => addFraction(step.id)}
                           className="h-8"
                         >
-                          <Fraction className="h-3 w-3 mr-1" />
+                          <Divide className="h-3 w-3 mr-1" />
                           Add Fraction
                         </Button>
                       </div>
                       
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         {step.fractions.map((fraction) => (
-                          <div key={fraction.id} className="flex items-center gap-2 p-2 border rounded bg-gray-50">
-                            <div className="flex-1 grid grid-cols-2 gap-2">
-                              <div>
-                                <label className="block text-xs text-gray-500 mb-1">Numerator</label>
+                          <div key={fraction.id} className="p-3 border rounded bg-gray-50">
+                            <div className="flex items-end gap-3">
+                              <div className="flex-1">
+                                <label className="block text-xs text-gray-500 mb-1">Numerator (Top)</label>
                                 <input
                                   type="text"
-                                  className="w-full p-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                  placeholder="Top number"
+                                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  placeholder="Enter numerator"
                                   value={fraction.numerator}
                                   onChange={(e) => updateFraction(step.id, fraction.id, 'numerator', e.target.value)}
                                 />
                               </div>
-                              <div>
-                                <label className="block text-xs text-gray-500 mb-1">Denominator</label>
+                              
+                              <div className="text-gray-400 mb-2">/</div>
+                              
+                              <div className="flex-1">
+                                <label className="block text-xs text-gray-500 mb-1">Denominator (Bottom)</label>
                                 <input
                                   type="text"
-                                  className="w-full p-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                  placeholder="Bottom number"
+                                  className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  placeholder="Enter denominator"
                                   value={fraction.denominator}
                                   onChange={(e) => updateFraction(step.id, fraction.id, 'denominator', e.target.value)}
                                 />
                               </div>
+                              
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => deleteFraction(step.id, fraction.id)}
+                                className="h-8 w-8 flex-shrink-0 mb-1"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => deleteFraction(step.id, fraction.id)}
-                              className="h-6 w-6 flex-shrink-0"
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
+                            
+                            {/* Individual fraction preview */}
+                            {(fraction.numerator || fraction.denominator) && (
+                              <div className="mt-2 pt-2 border-t border-gray-200">
+                                <div className="text-xs text-gray-500 mb-1">Fraction Preview:</div>
+                                <div 
+                                  className="p-2 bg-white rounded border text-center"
+                                  dangerouslySetInnerHTML={{ 
+                                    __html: `\\(\\frac{${fraction.numerator || '?'}}{${fraction.denominator || '?'}}\\)` 
+                                  }}
+                                />
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
                     </div>
 
-                    {/* Preview */}
+                    {/* Combined preview */}
                     {(step.input || step.fractions.length > 0) && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Preview
+                          Step Preview
                         </label>
                         <div 
                           className="p-3 bg-gray-50 rounded border min-h-[3rem] text-gray-700 flex items-center justify-center text-lg"
@@ -316,7 +319,7 @@ export const StepByStepMath = ({
                       size="icon"
                       variant="outline"
                       onClick={() => deleteStep(step.id)}
-                      className="h-8 w-8 rounded-full flex-shrink-0 border-red-200 hover:bg-red-50 hover:text-red-600"
+                      className="h-8 w-8 rounded-full flex-shrink-0 border-red-200 hover:bg-red-50 hover:text-red-600 mt-1"
                     >
                       <X className="h-3 w-3" />
                     </Button>
@@ -350,7 +353,7 @@ export const StepByStepMath = ({
               type="button"
               onClick={handleSubmit}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={steps.every(step => !step.input.trim() && step.fractions.length === 0)}
+              disabled={steps.every(step => !step.input.trim() && step.fractions.every(f => !f.numerator && !f.denominator))}
             >
               <Send className="h-4 w-4 mr-2" />
               Submit Work
