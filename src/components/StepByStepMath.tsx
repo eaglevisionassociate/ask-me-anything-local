@@ -5,9 +5,10 @@ import { Plus, X, Send, Trash2 } from "lucide-react";
 
 interface MathStep {
   id: number;
-  input: string;
+  beforeFraction: string;
   numerator: string;
   denominator: string;
+  afterFraction: string;
   hasFraction: boolean;
 }
 
@@ -30,7 +31,14 @@ export const StepByStepMath = ({
   onSubmit,
   placeholder = "Type your step..."
 }: StepByStepMathProps) => {
-  const [steps, setSteps] = useState<MathStep[]>([{ id: 0, input: "", numerator: "", denominator: "", hasFraction: false }]);
+  const [steps, setSteps] = useState<MathStep[]>([{ 
+    id: 0, 
+    beforeFraction: "", 
+    numerator: "", 
+    denominator: "", 
+    afterFraction: "",
+    hasFraction: false 
+  }]);
   const [stepCounter, setStepCounter] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -43,27 +51,44 @@ export const StepByStepMath = ({
   }, [steps]);
 
   const convertToLatex = (step: MathStep): string => {
-    if (!step.input.trim() && !step.hasFraction) {
+    const hasBefore = step.beforeFraction.trim();
+    const hasAfter = step.afterFraction.trim();
+    const hasFraction = step.hasFraction && (step.numerator || step.denominator);
+    
+    if (!hasBefore && !hasAfter && !hasFraction) {
       return '\\text{...}';
     }
 
-    let latex = step.input.trim();
+    let latex = '';
     
-    // If fraction exists, convert it and insert properly
-    if (step.hasFraction && (step.numerator || step.denominator)) {
+    // Add content before fraction
+    if (hasBefore) {
+      latex += step.beforeFraction.trim();
+    }
+    
+    // Add fraction if exists
+    if (hasFraction) {
       const numerator = step.numerator || '?';
       const denominator = step.denominator || '?';
       const fraction = `\\frac{${numerator}}{${denominator}}`;
       
-      // If there's already input, combine them naturally
       if (latex) {
-        latex = `${latex} ${fraction}`;
+        latex += ` ${fraction}`;
       } else {
         latex = fraction;
       }
     }
+    
+    // Add content after fraction
+    if (hasAfter) {
+      if (latex) {
+        latex += ` ${step.afterFraction.trim()}`;
+      } else {
+        latex = step.afterFraction.trim();
+      }
+    }
 
-    // Handle other conversions
+    // Handle conversions for all parts
     latex = latex.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
     latex = latex.replace(/(\d+|[a-zA-Z]|\([^)]+\))\s*\^\s*(\d+|[a-zA-Z]|\([^)]+\))/g, '$1^{$2}');
     latex = latex.replace(/\*/g, '\\times ');
@@ -74,7 +99,14 @@ export const StepByStepMath = ({
   };
 
   const addStep = () => {
-    setSteps([...steps, { id: stepCounter, input: "", numerator: "", denominator: "", hasFraction: false }]);
+    setSteps([...steps, { 
+      id: stepCounter, 
+      beforeFraction: "", 
+      numerator: "", 
+      denominator: "", 
+      afterFraction: "",
+      hasFraction: false 
+    }]);
     setStepCounter(stepCounter + 1);
   };
 
@@ -84,7 +116,7 @@ export const StepByStepMath = ({
     }
   };
 
-  const updateStep = (id: number, field: 'input' | 'numerator' | 'denominator', value: string) => {
+  const updateStep = (id: number, field: 'beforeFraction' | 'numerator' | 'denominator' | 'afterFraction', value: string) => {
     setSteps(steps.map(step => 
       step.id === id ? { ...step, [field]: value } : step
     ));
@@ -97,7 +129,14 @@ export const StepByStepMath = ({
   };
 
   const clearAll = () => {
-    setSteps([{ id: stepCounter, input: "", numerator: "", denominator: "", hasFraction: false }]);
+    setSteps([{ 
+      id: stepCounter, 
+      beforeFraction: "", 
+      numerator: "", 
+      denominator: "", 
+      afterFraction: "",
+      hasFraction: false 
+    }]);
     setStepCounter(stepCounter + 1);
   };
 
@@ -111,7 +150,7 @@ export const StepByStepMath = ({
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent, stepId: number) => {
+  const handleKeyPress = (e: React.KeyboardEvent, stepId: number, field: string) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       const currentIndex = steps.findIndex(s => s.id === stepId);
@@ -138,25 +177,19 @@ export const StepByStepMath = ({
           </div>
           
           <div className="bg-gray-50 rounded-lg p-4 mb-4 text-sm text-gray-600 border">
-            <strong className="text-blue-600">How to use:</strong> 
+            <strong className="text-blue-600">How to build your expression:</strong> 
             <div className="mt-2 space-y-2">
               <div className="flex items-center gap-2">
-                <span>• Type your main expression in the input field</span>
+                <span>1. Type what comes <strong>before</strong> the fraction</span>
               </div>
               <div className="flex items-center gap-2">
-                <span>• Check "Include Fraction" if you need a fraction</span>
+                <span>2. Check "Add Fraction" and fill numerator/denominator</span>
               </div>
               <div className="flex items-center gap-2">
-                <span>• Fill numerator and denominator</span>
+                <span>3. Type what comes <strong>after</strong> the fraction</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span>• The fraction will be added to your expression automatically</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span>• Examples: </span>
-                <code className="bg-white px-2 py-1 rounded border text-sm">2 + </code>
-                <span>+ fraction </span>
-                <code className="bg-white px-2 py-1 rounded border text-sm">* 5</code>
+              <div className="flex items-center gap-2 text-xs text-blue-600">
+                <span>Example: "2 + " [fraction] " * 5" becomes "2 + \frac{a}{b} \times 5"</span>
               </div>
             </div>
           </div>
@@ -170,24 +203,24 @@ export const StepByStepMath = ({
                   </div>
                   
                   <div className="flex-1 space-y-3">
-                    {/* Main input - you can type anything here */}
+                    {/* Before Fraction */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Step {index + 1}
+                        Before Fraction (optional)
                       </label>
                       <input
                         type="text"
                         className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        placeholder="Type your expression here... e.g., 2 + sqrt(16) * 5"
-                        value={step.input}
-                        onChange={(e) => updateStep(step.id, 'input', e.target.value)}
-                        onKeyPress={(e) => handleKeyPress(e, step.id)}
+                        placeholder="e.g., 2 + "
+                        value={step.beforeFraction}
+                        onChange={(e) => updateStep(step.id, 'beforeFraction', e.target.value)}
+                        onKeyPress={(e) => handleKeyPress(e, step.id, 'beforeFraction')}
                         autoFocus={index === steps.length - 1}
                       />
                     </div>
 
-                    {/* Fraction section - optional */}
-                    <div className="border-t pt-3">
+                    {/* Fraction Section */}
+                    <div className="border-l-4 border-blue-200 pl-4">
                       <div className="flex items-center gap-3 mb-3">
                         <input
                           type="checkbox"
@@ -197,12 +230,12 @@ export const StepByStepMath = ({
                           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                         />
                         <label htmlFor={`fraction-${step.id}`} className="text-sm font-medium text-gray-700">
-                          Include a fraction in this step
+                          Add Fraction Here
                         </label>
                       </div>
                       
                       {step.hasFraction && (
-                        <div className="grid grid-cols-2 gap-3 pl-7">
+                        <div className="grid grid-cols-2 gap-3">
                           <div>
                             <label className="block text-xs text-gray-500 mb-1">Numerator (top)</label>
                             <input
@@ -228,11 +261,26 @@ export const StepByStepMath = ({
                       )}
                     </div>
 
-                    {/* Preview shows exactly what you'll get */}
-                    {(step.input || step.hasFraction) && (
+                    {/* After Fraction */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        After Fraction (optional)
+                      </label>
+                      <input
+                        type="text"
+                        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="e.g.,  * 5 + 3"
+                        value={step.afterFraction}
+                        onChange={(e) => updateStep(step.id, 'afterFraction', e.target.value)}
+                        onKeyPress={(e) => handleKeyPress(e, step.id, 'afterFraction')}
+                      />
+                    </div>
+
+                    {/* Preview */}
+                    {(step.beforeFraction || step.hasFraction || step.afterFraction) && (
                       <div className="border-t pt-3">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Preview
+                          Step Preview
                         </label>
                         <div 
                           className="p-3 bg-gray-50 rounded border min-h-[3rem] text-gray-700 flex items-center justify-center text-lg"
@@ -240,9 +288,6 @@ export const StepByStepMath = ({
                             __html: `\\(${convertToLatex(step)}\\)` 
                           }}
                         />
-                        <div className="text-xs text-gray-500 mt-1">
-                          Your expression + fraction will be combined
-                        </div>
                       </div>
                     )}
                   </div>
@@ -288,7 +333,11 @@ export const StepByStepMath = ({
               type="button"
               onClick={handleSubmit}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={steps.every(step => !step.input.trim() && !step.hasFraction)}
+              disabled={steps.every(step => 
+                !step.beforeFraction.trim() && 
+                !step.afterFraction.trim() && 
+                !step.hasFraction
+              )}
             >
               <Send className="h-4 w-4 mr-2" />
               Submit Work
