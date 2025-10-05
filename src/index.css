@@ -162,3 +162,67 @@ All colors MUST be HSL.
 .typing-indicator:nth-child(3) {
   animation-delay: 0.4s;
 }
+
+/* Step-by-step math styles */
+.step-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.step-number {
+  background: hsl(var(--primary));
+  color: white;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.step-input {
+  flex: 1;
+  padding: 0.75rem;
+  font-size: 1.1rem;
+  border: 2px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  font-family: 'Courier New', monospace;
+  transition: var(--transition-smooth);
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.step-input:focus {
+  outline: none;
+  border-color: hsl(var(--primary));
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.1);
+}
+
+.step-preview {
+  flex: 1;
+  background: hsl(var(--card));
+  border: 2px solid hsl(var(--border));
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+  min-height: 50px;
+  display: flex;
+  align-items: center;
+  font-size: 1.1rem;
+  color: hsl(var(--foreground));
+}
+
+@media (max-width: 768px) {
+  .step-row {
+    flex-wrap: wrap;
+  }
+  
+  .step-input,
+  .step-preview {
+    width: 100%;
+    min-width: 0;
+  }
+}
