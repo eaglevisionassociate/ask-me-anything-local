@@ -6,6 +6,8 @@ import { Plus, X, Send, Trash2 } from "lucide-react";
 interface MathStep {
   id: number;
   input: string;
+  numerator: string;
+  denominator: string;
 }
 
 interface StepByStepMathProps {
@@ -27,7 +29,7 @@ export const StepByStepMath = ({
   onSubmit,
   placeholder = "Type your step..."
 }: StepByStepMathProps) => {
-  const [steps, setSteps] = useState<MathStep[]>([{ id: 0, input: "" }]);
+  const [steps, setSteps] = useState<MathStep[]>([{ id: 0, input: "", numerator: "", denominator: "" }]);
   const [stepCounter, setStepCounter] = useState(1);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -39,49 +41,41 @@ export const StepByStepMath = ({
     }
   }, [steps]);
 
-  const convertToLatex = (input: string): string => {
-    if (!input || input.trim() === '') {
+  const convertToLatex = (step: MathStep): string => {
+    const hasFraction = step.numerator || step.denominator;
+    const hasInput = step.input.trim();
+    
+    if (!hasInput && !hasFraction) {
       return '\\text{...}';
     }
 
-    let latex = input.trim();
+    let latex = step.input.trim();
     
-    // Enhanced fraction handling for various formats
-    // Handle fractions with parentheses: (expr)/(expr)
-    latex = latex.replace(/\(([^()]+)\)\s*\/\s*\(([^()]+)\)/g, '\\frac{$1}{$2}');
-    
-    // Handle fractions without parentheses but with operators
-    latex = latex.replace(/([^\s\/\(\)]+?(?:[\+\-\*][^\s\/\(\)]+?)*)\s*\/\s*([^\s\/\(\)]+?(?:[\+\-\*][^\s\/\(\)]+?)*)/g, 
-      (match, num, den) => {
-        // Check if numerator or denominator needs parentheses
-        const numNeedsParens = /[\+\-\*]/.test(num);
-        const denNeedsParens = /[\+\-\*]/.test(den);
-        const numerator = numNeedsParens ? `(${num})` : num;
-        const denominator = denNeedsParens ? `(${den})` : den;
-        return `\\frac{${numerator}}{${denominator}}`;
+    // Add fraction if numerator or denominator exists
+    if (hasFraction) {
+      const numerator = step.numerator || '?';
+      const denominator = step.denominator || '?';
+      const fraction = `\\frac{${numerator}}{${denominator}}`;
+      
+      if (latex) {
+        latex += ` + ${fraction}`;
+      } else {
+        latex = fraction;
       }
-    );
-    
-    // Handle simple fractions: a/b
-    latex = latex.replace(/(\d+|[a-zA-Z])\s*\/\s*(\d+|[a-zA-Z])/g, '\\frac{$1}{$2}');
-    
-    // Handle square root
+    }
+
+    // Handle other conversions in the main input
     latex = latex.replace(/sqrt\(([^)]+)\)/g, '\\sqrt{$1}');
-    
-    // Handle powers
     latex = latex.replace(/(\d+|[a-zA-Z]|\([^)]+\))\s*\^\s*(\d+|[a-zA-Z]|\([^)]+\))/g, '$1^{$2}');
-    
-    // Replace * with \times
     latex = latex.replace(/\*/g, '\\times ');
-    
-    // Clean up spaces
-    latex = latex.replace(/\s+/g, ' ').trim();
-    
+    latex = latex.replace(/([\+\-\*])(?=\S)/g, '$1 ');
+    latex = latex.replace(/(?<=\S)([\+\-\*])/g, ' $1');
+
     return latex;
   };
 
   const addStep = () => {
-    setSteps([...steps, { id: stepCounter, input: "" }]);
+    setSteps([...steps, { id: stepCounter, input: "", numerator: "", denominator: "" }]);
     setStepCounter(stepCounter + 1);
   };
 
@@ -91,20 +85,20 @@ export const StepByStepMath = ({
     }
   };
 
-  const updateStep = (id: number, value: string) => {
+  const updateStep = (id: number, field: 'input' | 'numerator' | 'denominator', value: string) => {
     setSteps(steps.map(step => 
-      step.id === id ? { ...step, input: value } : step
+      step.id === id ? { ...step, [field]: value } : step
     ));
   };
 
   const clearAll = () => {
-    setSteps([{ id: stepCounter, input: "" }]);
+    setSteps([{ id: stepCounter, input: "", numerator: "", denominator: "" }]);
     setStepCounter(stepCounter + 1);
   };
 
   const handleSubmit = () => {
     const filledSteps = steps
-      .map(step => step.input.trim())
+      .map(step => convertToLatex(step).replace(/\\text\{\.\.\.\}/g, '').trim())
       .filter(step => step.length > 0);
     
     if (filledSteps.length > 0 && onSubmit) {
@@ -139,27 +133,18 @@ export const StepByStepMath = ({
           </div>
           
           <div className="bg-gray-50 rounded-lg p-4 mb-4 text-sm text-gray-600 border">
-            <strong className="text-blue-600">Quick tips:</strong> 
+            <strong className="text-blue-600">How to use:</strong> 
             <div className="mt-2 space-y-2">
-              <div className="flex flex-wrap items-center gap-1">
-                <span>Fractions:</span>
-                <code className="bg-white px-2 py-1 rounded border text-sm">(12+2)/(26-2)</code>
-                <span>or</span>
-                <code className="bg-white px-2 py-1 rounded border text-sm">a/b</code>
-                <span>→</span>
-                <span className="text-xs">\(\frac{12+2}{26-2}\)</span>
+              <div className="flex items-center gap-2">
+                <span>• Use the main input for expressions like:</span>
+                <code className="bg-white px-2 py-1 rounded border text-sm">2 + sqrt(16)</code>
+                <code className="bg-white px-2 py-1 rounded border text-sm">3 * 5</code>
               </div>
-              <div className="flex flex-wrap items-center gap-1">
-                <span>Mixed expressions:</span>
-                <code className="bg-white px-2 py-1 rounded border text-sm">2 + (3+1)/(4-2) * 5</code>
-                <span>→</span>
-                <span className="text-xs">\(2 + \frac{3+1}{4-2} \times 5\)</span>
+              <div className="flex items-center gap-2">
+                <span>• Use numerator/denominator inputs for fractions</span>
               </div>
-              <div className="flex flex-wrap items-center gap-1">
-                <span>Other operations:</span>
-                <code className="bg-white px-2 py-1 rounded border text-sm">sqrt(16)</code>
-                <code className="bg-white px-2 py-1 rounded border text-sm">2^4</code>
-                <code className="bg-white px-2 py-1 rounded border text-sm">2*3</code>
+              <div className="flex items-center gap-2">
+                <span>• Both will be combined in the final expression</span>
               </div>
             </div>
           </div>
@@ -173,32 +158,74 @@ export const StepByStepMath = ({
                   </div>
                   
                   <div className="flex-1 space-y-3">
-                    {/* Step input */}
+                    {/* Main input */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Step {index + 1}
+                        Step Expression
                       </label>
                       <input
                         type="text"
-                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
-                        placeholder="e.g., (12+2)/(26-2) + sqrt(16) * 2^3"
+                        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="e.g., 2 + sqrt(16) * 3"
                         value={step.input}
-                        onChange={(e) => updateStep(step.id, e.target.value)}
+                        onChange={(e) => updateStep(step.id, 'input', e.target.value)}
                         onKeyPress={(e) => handleKeyPress(e, step.id)}
                         autoFocus={index === steps.length - 1}
                       />
                     </div>
 
-                    {/* Preview */}
-                    {step.input && (
+                    {/* Fraction inputs */}
+                    <div className="grid grid-cols-2 gap-3">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Preview
+                          Numerator (Top)
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="e.g., 12+2"
+                          value={step.numerator}
+                          onChange={(e) => updateStep(step.id, 'numerator', e.target.value)}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Denominator (Bottom)
+                        </label>
+                        <input
+                          type="text"
+                          className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                          placeholder="e.g., 26-2"
+                          value={step.denominator}
+                          onChange={(e) => updateStep(step.id, 'denominator', e.target.value)}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Individual fraction preview */}
+                    {(step.numerator || step.denominator) && (
+                      <div className="p-2 bg-gray-50 rounded border">
+                        <div className="text-xs text-gray-500 mb-1">Fraction Preview:</div>
+                        <div 
+                          className="text-center text-lg"
+                          dangerouslySetInnerHTML={{ 
+                            __html: `\\(\\frac{${step.numerator || '?'}}{${step.denominator || '?'}}\\)` 
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Combined preview */}
+                    {(step.input || step.numerator || step.denominator) && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Step Preview
                         </label>
                         <div 
-                          className="p-4 bg-gray-50 rounded border min-h-[3rem] text-gray-700 flex items-center justify-center text-lg"
+                          className="p-3 bg-gray-50 rounded border min-h-[3rem] text-gray-700 flex items-center justify-center text-lg"
                           dangerouslySetInnerHTML={{ 
-                            __html: `\\(${convertToLatex(step.input)}\\)` 
+                            __html: `\\(${convertToLatex(step)}\\)` 
                           }}
                         />
                       </div>
@@ -246,7 +273,7 @@ export const StepByStepMath = ({
               type="button"
               onClick={handleSubmit}
               className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
-              disabled={steps.every(step => !step.input.trim())}
+              disabled={steps.every(step => !step.input.trim() && !step.numerator && !step.denominator)}
             >
               <Send className="h-4 w-4 mr-2" />
               Submit Work
