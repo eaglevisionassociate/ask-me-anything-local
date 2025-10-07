@@ -30,7 +30,9 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
             }
           `}
         >
-          <div className="text-sm leading-relaxed whitespace-pre-wrap">{renderMathExpression(message.content)}</div>
+          <div className="text-sm leading-relaxed whitespace-pre-wrap">
+            {renderMathExpression(message.content)}
+          </div>
         </div>
         <span className="text-xs text-muted-foreground mt-1 px-2">
           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
