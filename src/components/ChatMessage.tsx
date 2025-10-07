@@ -1,6 +1,5 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, Bot } from "lucide-react";
-import { renderMathExpression } from "@/components/ui/fraction";
 
 interface ChatMessageProps {
   message: {
@@ -30,7 +29,7 @@ export const ChatMessage = ({ message }: ChatMessageProps) => {
             }
           `}
         >
-          <div className="text-sm leading-relaxed whitespace-pre-wrap">{renderMathExpression(message.content)}</div>
+          <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
         </div>
         <span className="text-xs text-muted-foreground mt-1 px-2">
           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
