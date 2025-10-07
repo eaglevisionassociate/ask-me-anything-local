@@ -34,26 +34,14 @@ export const usePuterAI = (): UsePuterAIReturn => {
   const [selectedModel, setSelectedModel] = useState<'claude-sonnet-4' | 'claude-opus-4'>('claude-sonnet-4');
 
   const generateResponse = useCallback(async (userMessage: string): Promise<string> => {
-    console.log('generateResponse called, checking window.puter...');
-    console.log('window.puter exists:', !!window.puter);
-    console.log('window.puter.ai exists:', !!(window.puter && window.puter.ai));
-    
     if (!window.puter) {
-      console.error('Puter.js not loaded');
       throw new Error('Puter.js not loaded. Please refresh the page.');
     }
 
-    if (!window.puter.ai) {
-      console.error('Puter.ai not available');
-      throw new Error('Puter AI not available. Please refresh the page.');
-    }
-
     try {
-      console.log('Calling window.puter.ai.chat with model:', selectedModel);
       const response = await window.puter.ai.chat(userMessage, {
         model: selectedModel,
       });
-      console.log('Raw response from puter.ai:', response);
 
       // Handle different response formats
       if (response.message?.content?.[0]?.text) {
@@ -63,19 +51,16 @@ export const usePuterAI = (): UsePuterAIReturn => {
       } else if (typeof response === 'string') {
         return response;
       } else {
-        console.warn('Unexpected response format:', response);
         // Fallback - stringify the response
         return JSON.stringify(response);
       }
     } catch (error) {
       console.error('Error generating response:', error);
-      throw new Error(`Failed to generate response: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error('Failed to generate response. Please try again.');
     }
   }, [selectedModel]);
 
   const sendMessage = useCallback(async (content: string) => {
-    console.log('sendMessage called with content:', content);
-    
     const userMessage: Message = {
       id: Date.now().toString(),
       content,
@@ -87,9 +72,7 @@ export const usePuterAI = (): UsePuterAIReturn => {
     setIsLoading(true);
 
     try {
-      console.log('Calling generateResponse...');
       const response = await generateResponse(content);
-      console.log('Got response:', response);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -100,10 +83,9 @@ export const usePuterAI = (): UsePuterAIReturn => {
 
       setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
-      console.error('Error in sendMessage:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: `Sorry, I encountered an error: ${error instanceof Error ? error.message : 'Unknown error'}. Please refresh the page and try again.`,
+        content: 'Sorry, I encountered an error while processing your request. Please try again.',
         isUser: false,
         timestamp: new Date(),
       };
