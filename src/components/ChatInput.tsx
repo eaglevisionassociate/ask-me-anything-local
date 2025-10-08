@@ -84,9 +84,9 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
           </Button>
           
           {showQuestions && (
-            <Card className="absolute bottom-full mb-2 right-0 w-80 p-2 shadow-lg z-50">
+            <Card className="absolute bottom-full mb-2 right-0 w-80 p-2 shadow-lg z-[100] bg-card border-border">
               <div className="space-y-1">
-                <p className="text-sm font-medium px-2 py-1">Quick Questions</p>
+                <p className="text-sm font-medium px-2 py-1 text-card-foreground">Quick Questions</p>
                 {quickQuestions.map((question, index) => (
                   <Button
                     key={index}
