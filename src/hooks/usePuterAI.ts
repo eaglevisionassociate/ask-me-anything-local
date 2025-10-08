@@ -34,43 +34,33 @@ export const usePuterAI = (): UsePuterAIReturn => {
   const [selectedModel, setSelectedModel] = useState<'claude-sonnet-4' | 'claude-opus-4'>('claude-sonnet-4');
 
   const generateResponse = useCallback(async (userMessage: string): Promise<string> => {
-    console.log('🔍 generateResponse - window.puter exists?', !!window.puter);
-    console.log('🔍 generateResponse - window.puter.ai exists?', !!(window.puter?.ai));
-    
     if (!window.puter) {
       throw new Error('Puter.js not loaded. Please refresh the page.');
     }
 
     try {
-      console.log('🚀 Calling window.puter.ai.chat with model:', selectedModel);
       const response = await window.puter.ai.chat(userMessage, {
         model: selectedModel,
       });
-      console.log('📦 Raw AI response:', response);
 
       // Handle different response formats
       if (response.message?.content?.[0]?.text) {
-        console.log('✅ Using response.message.content[0].text');
         return response.message.content[0].text;
       } else if (response.text) {
-        console.log('✅ Using response.text');
         return response.text;
       } else if (typeof response === 'string') {
-        console.log('✅ Response is string');
         return response;
       } else {
-        console.log('⚠️ Using JSON.stringify fallback');
+        // Fallback - stringify the response
         return JSON.stringify(response);
       }
     } catch (error) {
-      console.error('❌ Error generating response:', error);
+      console.error('Error generating response:', error);
       throw new Error('Failed to generate response. Please try again.');
     }
   }, [selectedModel]);
 
   const sendMessage = useCallback(async (content: string) => {
-    console.log('📤 sendMessage called with:', content);
-    
     const userMessage: Message = {
       id: Date.now().toString(),
       content,
@@ -78,16 +68,11 @@ export const usePuterAI = (): UsePuterAIReturn => {
       timestamp: new Date(),
     };
 
-    setMessages(prev => {
-      console.log('📝 Adding user message to state');
-      return [...prev, userMessage];
-    });
+    setMessages(prev => [...prev, userMessage]);
     setIsLoading(true);
 
     try {
-      console.log('🤖 Calling generateResponse...');
       const response = await generateResponse(content);
-      console.log('✅ AI Response received:', response);
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -96,12 +81,8 @@ export const usePuterAI = (): UsePuterAIReturn => {
         timestamp: new Date(),
       };
 
-      setMessages(prev => {
-        console.log('📝 Adding AI message to state:', aiMessage);
-        return [...prev, aiMessage];
-      });
+      setMessages(prev => [...prev, aiMessage]);
     } catch (error) {
-      console.error('❌ Error in sendMessage:', error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: 'Sorry, I encountered an error while processing your request. Please try again.',
