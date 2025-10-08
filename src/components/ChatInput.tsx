@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, HelpCircle } from "lucide-react";
+import { Send, Loader2, HelpCircle, Calculator } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { MathExpressionBuilder } from "./MathExpressionBuilder";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -14,6 +15,7 @@ interface ChatInputProps {
 export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "Ask me anything..." }: ChatInputProps) => {
   const [message, setMessage] = useState("");
   const [showQuestions, setShowQuestions] = useState(false);
+  const [showMathBuilder, setShowMathBuilder] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const quickQuestions = [
@@ -60,8 +62,23 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
     setShowQuestions(!showQuestions);
   };
 
+  const toggleMathBuilder = () => {
+    setShowMathBuilder(!showMathBuilder);
+  };
+
+  const handleMathSubmit = (expression: string) => {
+    onSendMessage(expression);
+    setShowMathBuilder(false);
+  };
+
   return (
     <div className="space-y-2">
+      {showMathBuilder && (
+        <MathExpressionBuilder
+          onSubmit={handleMathSubmit}
+          onCancel={() => setShowMathBuilder(false)}
+        />
+      )}
       <form onSubmit={handleSubmit} className="flex gap-3 items-end">
         <div className="flex-1 relative" ref={dropdownRef}>
           <Textarea
@@ -69,19 +86,33 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="min-h-[50px] max-h-32 resize-none bg-input border-border focus:ring-2 focus:ring-accent focus:border-transparent transition-smooth pr-12"
+            className="min-h-[50px] max-h-32 resize-none bg-input border-border focus:ring-2 focus:ring-accent focus:border-transparent transition-smooth pr-20"
             disabled={isLoading || disabled}
           />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={toggleQuestions}
-            className="absolute right-2 top-2 h-8 w-8 text-muted-foreground hover:text-foreground"
-            disabled={isLoading || disabled}
-          >
-            <HelpCircle className="w-4 h-4" />
-          </Button>
+          <div className="absolute right-2 top-2 flex gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={toggleMathBuilder}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              disabled={isLoading || disabled}
+              title="Math Expression Builder"
+            >
+              <Calculator className="w-4 h-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={toggleQuestions}
+              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              disabled={isLoading || disabled}
+              title="Quick Questions"
+            >
+              <HelpCircle className="w-4 h-4" />
+            </Button>
+          </div>
           
           {showQuestions && (
             <Card className="absolute bottom-full mb-2 right-0 w-80 p-2 shadow-lg z-[100] bg-card border-border">
