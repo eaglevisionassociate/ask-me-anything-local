@@ -130,7 +130,9 @@ Make sure the questions are educational, engaging, and appropriate for Grade 8 m
 
   } catch (error) {
     console.error('Error in generate-exercise function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ 
+      error: error instanceof Error ? error.message : 'An unknown error occurred' 
+    }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
