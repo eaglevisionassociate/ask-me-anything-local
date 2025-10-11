@@ -108,7 +108,9 @@ export const MathExpressionBuilder = ({
           <span className="border-b border-black dark:border-white px-1">
             {formatMathText(step.numerator)}
           </span>
-          <span className="pt-0.5 px-1">{formatMathText(step.denominator)}</span>
+          <span className="pt-0.5 px-1">
+            {formatMathText(step.denominator)}
+          </span>
         </span>
       );
     }
@@ -122,7 +124,7 @@ export const MathExpressionBuilder = ({
     }
 
     if (parts.length === 0) {
-      return <span className="text-muted-foreground">No expression to display</span>;
+      return <span className="text-gray-500">No expression to display</span>;
     }
 
     return <div className="inline-flex items-center">{parts}</div>;
@@ -160,12 +162,12 @@ export const MathExpressionBuilder = ({
   };
 
   return (
-    <Card className="p-4 space-y-4 bg-card border-border">
-      <div className="bg-muted p-3 rounded-md">
-        <h3 className="text-sm font-semibold text-foreground mb-2">
+    <Card className="p-4 space-y-4 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700">
+      <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
+        <h3 className="text-sm font-semibold text-black dark:text-white mb-2">
           How to build your expression:
         </h3>
-        <ol className="text-xs text-muted-foreground space-y-1">
+        <ol className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
           <li>
             1. Type what comes <strong>before</strong> the fraction
           </li>
@@ -182,8 +184,6 @@ export const MathExpressionBuilder = ({
       <div className="space-y-4 max-h-[400px] overflow-y-auto">
         {steps.map((step, index) => {
           const expressionStr = buildExpression(step);
-
-          // NEW: fixed preview visibility logic
           const hasContent =
             step.beforeFraction.trim() !== "" ||
             (step.addFraction &&
@@ -196,20 +196,20 @@ export const MathExpressionBuilder = ({
           return (
             <Card
               key={step.id}
-              className="p-4 bg-background border-border space-y-3"
+              className="p-4 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 space-y-3"
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary text-primary-foreground text-sm font-medium">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500 text-white text-sm font-medium">
                   {index + 1}
                 </span>
-                <h4 className="text-sm font-medium text-foreground">
+                <h4 className="text-sm font-medium text-black dark:text-white">
                   Step {index + 1}
                 </h4>
               </div>
 
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs font-medium text-foreground mb-1 block">
+                  <label className="text-xs font-medium text-black dark:text-white mb-1 block">
                     Before Fraction
                   </label>
                   <Input
@@ -218,11 +218,11 @@ export const MathExpressionBuilder = ({
                       updateStep(step.id, "beforeFraction", e.target.value)
                     }
                     placeholder="e.g., 12+45"
-                    className="bg-input border-border"
+                    className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
                   />
                 </div>
 
-                <div className="flex items-center gap-2 pl-4 border-l-2 border-accent">
+                <div className="flex items-center gap-2 pl-4 border-l-2 border-blue-500">
                   <Checkbox
                     checked={step.addFraction}
                     onCheckedChange={(checked) =>
@@ -232,7 +232,7 @@ export const MathExpressionBuilder = ({
                   />
                   <label
                     htmlFor={`fraction-${step.id}`}
-                    className="text-sm text-foreground cursor-pointer"
+                    className="text-sm text-black dark:text-white cursor-pointer"
                   >
                     Add Fraction Here
                   </label>
@@ -246,7 +246,7 @@ export const MathExpressionBuilder = ({
                         updateStep(step.id, "numerator", e.target.value)
                       }
                       placeholder="Numerator (e.g., 11-12)"
-                      className="bg-input border-border"
+                      className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
                     />
                     <Input
                       value={step.denominator}
@@ -254,13 +254,13 @@ export const MathExpressionBuilder = ({
                         updateStep(step.id, "denominator", e.target.value)
                       }
                       placeholder="Denominator (e.g., 12-12)"
-                      className="bg-input border-border"
+                      className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="text-xs font-medium text-foreground mb-1 block">
+                  <label className="text-xs font-medium text-black dark:text-white mb-1 block">
                     After Fraction
                   </label>
                   <Input
@@ -269,23 +269,23 @@ export const MathExpressionBuilder = ({
                       updateStep(step.id, "afterFraction", e.target.value)
                     }
                     placeholder="e.g., + 3"
-                    className="bg-input border-border"
+                    className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
                   />
                 </div>
 
                 {hasContent && (
-                  <div className="bg-muted p-3 rounded border border-border">
-                    <p className="text-xs text-muted-foreground mb-1">
+                  <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded border border-gray-300 dark:border-gray-600">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                       Step Preview:
                     </p>
-                    <div className="min-h-[40px] flex items-center justify-center p-2 bg-white dark:bg-gray-800 rounded border">
-                      <div className="text-lg text-foreground text-center font-math">
+                    <div className="min-h-[40px] flex items-center justify-center p-2 rounded border border-gray-400 dark:border-gray-600 bg-white dark:bg-gray-900">
+                      <div className="text-lg text-black dark:text-white text-center font-math">
                         {formattedPreview}
                       </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
                       Raw:{" "}
-                      <code className="bg-border px-1 rounded">
+                      <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">
                         {expressionStr}
                       </code>
                     </p>
@@ -297,7 +297,7 @@ export const MathExpressionBuilder = ({
         })}
       </div>
 
-      <div className="flex gap-2 pt-2 border-t border-border">
+      <div className="flex gap-2 pt-2 border-t border-gray-300 dark:border-gray-600">
         <Button type="button" variant="outline" onClick={addStep} className="flex-1">
           <Plus className="w-4 h-4 mr-1" />
           Add Step
@@ -312,7 +312,7 @@ export const MathExpressionBuilder = ({
         <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
           Cancel
         </Button>
-        <Button type="button" onClick={handleSubmit} className="flex-1 bg-primary hover:opacity-90">
+        <Button type="button" onClick={handleSubmit} className="flex-1 bg-blue-500 hover:opacity-90 text-white">
           Submit Work
         </Button>
       </div>
