@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,8 +35,8 @@ export const MathExpressionBuilder = ({
   ]);
 
   const addStep = () => {
-    setSteps([
-      ...steps,
+    setSteps((prev) => [
+      ...prev,
       {
         id: Date.now().toString(),
         beforeFraction: "",
@@ -53,8 +53,8 @@ export const MathExpressionBuilder = ({
     field: keyof MathStep,
     value: string | boolean
   ) => {
-    setSteps(
-      steps.map((step) =>
+    setSteps((prev) =>
+      prev.map((step) =>
         step.id === id ? { ...step, [field]: value } : step
       )
     );
@@ -74,12 +74,14 @@ export const MathExpressionBuilder = ({
   };
 
   const buildExpression = (step: MathStep): string => {
-    let expr = step.beforeFraction;
-    if (step.addFraction && step.numerator && step.denominator) {
-      expr += ` (${step.numerator})/(${step.denominator})`;
+    let expr = step.beforeFraction.trim();
+    if (step.addFraction && step.numerator.trim() && step.denominator.trim()) {
+      // I include parentheses around numerator/denominator
+      expr += ` (${step.numerator.trim()})/(${step.denominator.trim()})`;
     }
-    if (step.afterFraction) {
-      expr += ` ${step.afterFraction}`;
+    if (step.afterFraction.trim()) {
+      // ensure spacing
+      expr += ` ${step.afterFraction.trim()}`;
     }
     return expr.trim();
   };
@@ -87,6 +89,7 @@ export const MathExpressionBuilder = ({
   const formatMathPreview = (step: MathStep): JSX.Element => {
     const parts: JSX.Element[] = [];
 
+    // Before fraction
     if (step.beforeFraction.trim()) {
       parts.push(
         <span key="before" className="mr-1">
@@ -95,17 +98,14 @@ export const MathExpressionBuilder = ({
       );
     }
 
-    if (
-      step.addFraction &&
-      step.numerator.trim() !== "" &&
-      step.denominator.trim() !== ""
-    ) {
+    // Fraction part
+    if (step.addFraction && step.numerator.trim() && step.denominator.trim()) {
       parts.push(
         <span
           key="fraction"
           className="inline-flex flex-col items-center mx-1 leading-none"
         >
-          <span className="border-b border-black dark:border-white px-1">
+          <span className="border-b border-gray-700 px-1">
             {formatMathText(step.numerator)}
           </span>
           <span className="pt-0.5 px-1">
@@ -115,6 +115,7 @@ export const MathExpressionBuilder = ({
       );
     }
 
+    // After fraction
     if (step.afterFraction.trim()) {
       parts.push(
         <span key="after" className="ml-1">
@@ -155,35 +156,30 @@ export const MathExpressionBuilder = ({
   };
 
   const handleSubmit = () => {
-    const fullExpression = steps.map(buildExpression).join("\n");
-    if (fullExpression.trim()) {
-      onSubmit(fullExpression);
+    const fullExpr = steps.map(buildExpression).join(" ");
+    if (fullExpr.trim()) {
+      onSubmit(fullExpr);
     }
   };
 
   return (
     <Card className="p-4 space-y-4 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700">
+      {/* Instructions */}
       <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded-md">
-        <h3 className="text-sm font-semibold text-black dark:text-white mb-2">
-          How to build your expression:
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+          Build your expression:
         </h3>
         <ol className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-          <li>
-            1. Type what comes <strong>before</strong> the fraction
-          </li>
-          <li>
-            2. Check "Add Fraction" and fill numerator/denominator
-          </li>
-          <li>
-            3. Type what comes <strong>after</strong> the fraction
-          </li>
-          <li>4. Use: * for ×, / for ÷, ^2 for ², sqrt for √, pi for π</li>
+          <li>Type what comes <strong>before</strong> the fraction</li>
+          <li>Check “Add Fraction” and fill numerator/denominator</li>
+          <li>Type what comes <strong>after</strong> the fraction</li>
+          <li>Use: * for ×, / for ÷, ^2 for ², sqrt for √, pi for π</li>
         </ol>
       </div>
 
       <div className="space-y-4 max-h-[400px] overflow-y-auto">
-        {steps.map((step, index) => {
-          const expressionStr = buildExpression(step);
+        {steps.map((step, idx) => {
+          const exprStr = buildExpression(step);
           const hasContent =
             step.beforeFraction.trim() !== "" ||
             (step.addFraction &&
@@ -191,25 +187,27 @@ export const MathExpressionBuilder = ({
               step.denominator.trim() !== "") ||
             step.afterFraction.trim() !== "";
 
-          const formattedPreview = formatMathPreview(step);
+          const preview = formatMathPreview(step);
 
           return (
             <Card
               key={step.id}
               className="p-4 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 space-y-3"
             >
+              {/* Step Header */}
               <div className="flex items-center gap-2 mb-2">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500 text-white text-sm font-medium">
-                  {index + 1}
+                  {idx + 1}
                 </span>
-                <h4 className="text-sm font-medium text-black dark:text-white">
-                  Step {index + 1}
+                <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Step {idx + 1}
                 </h4>
               </div>
 
               <div className="space-y-3">
+                {/* Before Fraction Input */}
                 <div>
-                  <label className="text-xs font-medium text-black dark:text-white mb-1 block">
+                  <label className="text-xs font-medium text-gray-900 dark:text-gray-100 mb-1 block">
                     Before Fraction
                   </label>
                   <Input
@@ -222,22 +220,24 @@ export const MathExpressionBuilder = ({
                   />
                 </div>
 
+                {/* Fraction Toggle */}
                 <div className="flex items-center gap-2 pl-4 border-l-2 border-blue-500">
                   <Checkbox
                     checked={step.addFraction}
-                    onCheckedChange={(checked) =>
-                      updateStep(step.id, "addFraction", !!checked)
+                    onCheckedChange={(chk) =>
+                      updateStep(step.id, "addFraction", !!chk)
                     }
                     id={`fraction-${step.id}`}
                   />
                   <label
                     htmlFor={`fraction-${step.id}`}
-                    className="text-sm text-black dark:text-white cursor-pointer"
+                    className="text-sm text-gray-900 dark:text-gray-100 cursor-pointer"
                   >
                     Add Fraction Here
                   </label>
                 </div>
 
+                {/* Numerator / Denominator */}
                 {step.addFraction && (
                   <div className="grid grid-cols-2 gap-2 pl-4">
                     <Input
@@ -245,7 +245,7 @@ export const MathExpressionBuilder = ({
                       onChange={(e) =>
                         updateStep(step.id, "numerator", e.target.value)
                       }
-                      placeholder="Numerator (e.g., 11-12)"
+                      placeholder="Numerator"
                       className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
                     />
                     <Input
@@ -253,14 +253,15 @@ export const MathExpressionBuilder = ({
                       onChange={(e) =>
                         updateStep(step.id, "denominator", e.target.value)
                       }
-                      placeholder="Denominator (e.g., 12-12)"
+                      placeholder="Denominator"
                       className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600"
                     />
                   </div>
                 )}
 
+                {/* After Fraction Input */}
                 <div>
-                  <label className="text-xs font-medium text-black dark:text-white mb-1 block">
+                  <label className="text-xs font-medium text-gray-900 dark:text-gray-100 mb-1 block">
                     After Fraction
                   </label>
                   <Input
@@ -273,20 +274,21 @@ export const MathExpressionBuilder = ({
                   />
                 </div>
 
+                {/* Preview Box */}
                 {hasContent && (
                   <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded border border-gray-300 dark:border-gray-600">
                     <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                       Step Preview:
                     </p>
                     <div className="min-h-[40px] flex items-center justify-center p-2 rounded border border-gray-400 dark:border-gray-600 bg-white dark:bg-gray-900">
-                      <div className="text-lg text-black dark:text-white text-center font-math">
-                        {formattedPreview}
+                      <div className="text-lg text-gray-900 dark:text-gray-100 text-center font-math">
+                        {preview}
                       </div>
                     </div>
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
                       Raw:{" "}
                       <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">
-                        {expressionStr}
+                        {exprStr}
                       </code>
                     </p>
                   </div>
@@ -298,21 +300,40 @@ export const MathExpressionBuilder = ({
       </div>
 
       <div className="flex gap-2 pt-2 border-t border-gray-300 dark:border-gray-600">
-        <Button type="button" variant="outline" onClick={addStep} className="flex-1">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addStep}
+          className="flex-1"
+        >
           <Plus className="w-4 h-4 mr-1" />
           Add Step
         </Button>
-        <Button type="button" variant="outline" onClick={clearAll} className="flex-1">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={clearAll}
+          className="flex-1"
+        >
           <Trash2 className="w-4 h-4 mr-1" />
           Clear All
         </Button>
       </div>
 
       <div className="flex gap-2">
-        <Button type="button" variant="outline" onClick={onCancel} className="flex-1">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onCancel}
+          className="flex-1"
+        >
           Cancel
         </Button>
-        <Button type="button" onClick={handleSubmit} className="flex-1 bg-blue-500 hover:opacity-90 text-white">
+        <Button
+          type="button"
+          onClick={handleSubmit}
+          className="flex-1 bg-blue-500 hover:opacity-90 text-white"
+        >
           Submit Work
         </Button>
       </div>
