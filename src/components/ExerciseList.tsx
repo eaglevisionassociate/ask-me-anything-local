@@ -7,14 +7,11 @@ import { Input } from '@/components/ui/input';
 import { useExercises, Exercise } from '@/hooks/useExercises';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
-import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer, Pencil, Camera, Upload } from 'lucide-react';
+import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatMathExpression } from '@/lib/fractionUtils';
 import { Fraction, renderMathExpression } from '@/components/ui/fraction';
-import { DrawingPad } from "./DrawingPad";
 import { useToast } from "@/hooks/use-toast";
-import Tesseract from 'tesseract.js';
-import { usePuterAI } from '@/hooks/usePuterAI';
 
 interface ExerciseListProps {
   lessonId?: string;
@@ -27,8 +24,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
   const { generateExercise, isGenerating } = useGenerateExercise();
   const { completeExercise } = useActivityTracking();
   const { toast } = useToast();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { generateResponse: generatePuterResponse, isPuterReady } = usePuterAI();
   
   const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
   const [userAnswers, setUserAnswers] = useState<{ [key: string]: string }>({});
@@ -36,10 +31,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
   const [submittedAnswers, setSubmittedAnswers] = useState<{ [key: string]: boolean }>({});
   const [answerFeedback, setAnswerFeedback] = useState<{ [key: string]: { isCorrect: boolean; feedback: string; explanationSteps?: string[] } }>({});
   const [fractionInput, setFractionInput] = useState<{ [key: string]: { numerator: string; denominator: string; isEditing: boolean } }>({});
-  const [showDrawing, setShowDrawing] = useState<{ [key: string]: boolean }>({});
-  const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: File | null }>({});
-  const [uploadPreviews, setUploadPreviews] = useState<{ [key: string]: string }>({});
-  const [isProcessingUpload, setIsProcessingUpload] = useState<{ [key: string]: boolean }>({});
 
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(selectedExercise === exercise.id ? null : exercise.id);
@@ -50,14 +41,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
       setFractionInput(prev => ({
         ...prev,
         [exercise.id]: { numerator: '', denominator: '', isEditing: false }
-      }));
-    }
-    
-    // Auto-show drawing pad for geometry exercises
-    if (isGeometryExercise(exercise.question) && !showDrawing[exercise.id]) {
-      setShowDrawing(prev => ({
-        ...prev,
-        [exercise.id]: true
       }));
     }
   };
@@ -119,182 +102,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
     const currentAnswer = userAnswers[exerciseId] || '';
     const newAnswer = currentAnswer + ` ${operator} `;
     handleAnswerChange(exerciseId, newAnswer);
-  };
-
-  const isGeometryExercise = (question: string): boolean => {
-    const geometryKeywords = [
-      'draw', 'sketch', 'construct', 'diagram', 'angle', 'triangle', 
-      'rectangle', 'circle', 'square', 'polygon', 'line', 'point',
-      'perpendicular', 'parallel', 'bisector', 'median', 'altitude'
-    ];
-    return geometryKeywords.some(keyword => 
-      question.toLowerCase().includes(keyword.toLowerCase())
-    );
-  };
-
-  const handleDrawingSave = (exerciseId: string, dataURL: string) => {
-    // Here you could save the drawing or analyze it
-    // For now, just show a success message
-    setAnswerFeedback(prev => ({
-      ...prev,
-      [exerciseId]: {
-        isCorrect: true,
-        feedback: "Drawing saved! Great work on your geometric construction."
-      }
-    }));
-  };
-
-  const handleFileUpload = (exerciseId: string, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
-      toast({
-        title: "Invalid File Type",
-        description: "Please select an image or PDF file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setUploadedFiles(prev => ({ ...prev, [exerciseId]: file }));
-    
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setUploadPreviews(prev => ({ ...prev, [exerciseId]: e.target?.result as string }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const processUploadedWork = async (exerciseId: string) => {
-    const file = uploadedFiles[exerciseId];
-    if (!file) return;
-
-    setIsProcessingUpload(prev => ({ ...prev, [exerciseId]: true }));
-    
-    try {
-      let extractedText = "";
-      
-      if (file.type.startsWith('image/')) {
-        const result = await Tesseract.recognize(file, 'eng', {
-          logger: m => console.log(m)
-        });
-        extractedText = result.data.text;
-      }
-
-      const exercise = exercises.find(e => e.id === exerciseId);
-      if (!exercise) return;
-
-      if (!extractedText || extractedText.trim().length < 2) {
-        setAnswerFeedback(prev => ({
-          ...prev,
-          [exerciseId]: {
-            isCorrect: false,
-            feedback: "⚠️ Could not detect clear answer in the image. Please ensure the photo is clear and try again.",
-            explanationSteps: ["No text could be extracted from the image"]
-          }
-        }));
-        
-        toast({
-          title: "Upload Failed",
-          description: "Please try with a clearer image",
-          variant: "destructive",
-        });
-        
-        return;
-      }
-
-      // Check if Puter AI is ready
-      if (!isPuterReady()) {
-        toast({
-          title: "Puter AI Not Ready",
-          description: "Please wait for Puter AI to load and try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Use Puter AI to validate the answer
-      const validationPrompt = `You are a helpful math tutor evaluating a student's answer. Compare the student's answer with the correct answer.
-
-Be flexible in your evaluation:
-- Accept mathematically equivalent answers (e.g., 1/2 = 0.5 = 50%)
-- Ignore minor formatting differences
-- Accept answers in different units if they're equivalent
-- Consider partial credit for partially correct answers
-
-Question: ${exercise.question}
-Correct Answer: ${exercise.answer}
-Student's Answer: ${extractedText}
-
-Respond ONLY with valid JSON in this exact format:
-{
-  "isCorrect": true/false,
-  "score": 0-100,
-  "feedback": "brief encouraging feedback",
-  "explanation": "why the answer is correct/incorrect"
-}`;
-
-      const aiResponse = await generatePuterResponse(validationPrompt);
-      
-      // Parse the AI response
-      let validation;
-      try {
-        // Try to extract JSON from the response
-        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          validation = JSON.parse(jsonMatch[0]);
-        } else {
-          throw new Error('No JSON found in response');
-        }
-      } catch (parseError) {
-        console.error('Failed to parse Puter AI response:', parseError);
-        toast({
-          title: "Validation Error",
-          description: "Could not parse AI response. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      setAnswerFeedback(prev => ({
-        ...prev,
-        [exerciseId]: {
-          isCorrect: validation.isCorrect,
-          feedback: validation.feedback || (validation.isCorrect ? "✅ Correct!" : "❌ Not quite right"),
-          explanationSteps: [
-            `📝 Extracted text: "${extractedText.substring(0, 200)}"`,
-            `✓ Correct answer: "${exercise.answer}"`,
-            `💡 ${validation.explanation || ''}`
-          ]
-        }
-      }));
-
-      setSubmittedAnswers(prev => ({ ...prev, [exerciseId]: true }));
-
-      toast({
-        title: validation.isCorrect ? "Correct! 🎉" : "Not Quite Right",
-        description: validation.feedback,
-      });
-
-      await completeExercise(
-        `${exercise.question.substring(0, 30)}...`,
-        validation.score || (validation.isCorrect ? 100 : 0),
-        'Mathematics'
-      );
-      
-    } catch (error) {
-      console.error('Processing error:', error);
-      toast({
-        title: "Processing Failed",
-        description: "Failed to process the uploaded file. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsProcessingUpload(prev => ({ ...prev, [exerciseId]: false }));
-    }
   };
 
   const handleSubmitAnswer = async (exerciseId: string) => {
@@ -473,10 +280,6 @@ Respond ONLY with valid JSON in this exact format:
     setSubmittedAnswers({});
     setAnswerFeedback({});
     setFractionInput({});
-    setShowDrawing({});
-    setUploadedFiles({});
-    setUploadPreviews({});
-    setIsProcessingUpload({});
   };
 
   const handlePrintExercises = () => {
@@ -656,339 +459,224 @@ Respond ONLY with valid JSON in this exact format:
 
             {selectedExercise === exercise.id && (
               <div className="space-y-4 border-t pt-4" onClick={(e) => e.stopPropagation()}>
-                
-                {/* Drawing Pad for Geometry Exercises */}
-                {isGeometryExercise(exercise.question) && (
-                  <div className="space-y-3 bg-primary/5 p-4 rounded-lg border-2 border-primary/20">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-2">
-                        <Pencil className="w-5 h-5 text-primary" />
-                        <span className="text-sm font-semibold text-primary">✏️ Use Drawing Pad Below</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowDrawing(prev => ({ 
-                          ...prev, 
-                          [exercise.id]: !prev[exercise.id] 
-                        }))}
-                      >
-                        {showDrawing[exercise.id] ? "Hide Drawing" : "Show Drawing"}
-                      </Button>
-                    </div>
-                    
-                    {showDrawing[exercise.id] && (
-                      <div className="w-full">
-                        <DrawingPad 
-                          height={300}
-                          onSave={(dataURL) => handleDrawingSave(exercise.id, dataURL)} 
+                <div className="bg-card p-4 rounded-lg border">
+                  <label className="text-lg font-semibold mb-4 block">Type Your Answer:</label>
+                  {/* Fraction Builder */}
+                  <div className="bg-muted/30 p-4 rounded-lg space-y-4">
+                    <div className="text-base font-medium">Build Fraction:</div>
+                    <div className="grid grid-cols-3 gap-3 items-center">
+                      <div>
+                        <label className="text-sm text-muted-foreground block mb-2">Numerator</label>
+                        <input
+                          type="text"
+                          value={fractionInput[exercise.id]?.numerator || ''}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleFractionInput(exercise.id, 'numerator', e.target.value);
+                          }}
+                          className="w-full px-3 py-2 border rounded-md text-center bg-background"
+                          placeholder="Top"
                         />
                       </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Photo/PDF Upload Option */}
-                <div className="space-y-3 bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Camera className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    <span className="text-sm font-semibold text-blue-700 dark:text-blue-300">📸 Upload Your Work (Photo/PDF)</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Did this exercise on paper? Take a photo or upload a PDF for automatic correction!
-                  </p>
-                  
-                  <div className="flex gap-2">
+                      <div className="text-center text-3xl font-light text-muted-foreground pt-6">
+                        /
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground block mb-2">Denominator</label>
+                        <input
+                          type="text"
+                          value={fractionInput[exercise.id]?.denominator || ''}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            handleFractionInput(exercise.id, 'denominator', e.target.value);
+                          }}
+                          className="w-full px-3 py-2 border rounded-md text-center bg-background"
+                          placeholder="Bottom"
+                        />
+                      </div>
+                    </div>
+                    
                     <Button
-                      variant="outline"
-                      size="sm"
+                      type="button"
+                      size="lg"
                       onClick={(e) => {
                         e.stopPropagation();
-                        fileInputRef.current?.click();
+                        handleInsertFraction(exercise.id);
                       }}
-                      className="flex-1"
+                      disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                      className="w-full"
                     >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Choose File
+                      Add Fraction
                     </Button>
-                    {uploadedFiles[exercise.id] && (
-                      <Button 
+                    
+                    <div className="grid grid-cols-4 gap-2">
+                      <Button
+                        type="button"
                         size="sm"
+                        variant="secondary"
                         onClick={(e) => {
                           e.stopPropagation();
-                          processUploadedWork(exercise.id);
+                          handleInsertFraction(exercise.id, '+');
                         }}
-                        disabled={isProcessingUpload[exercise.id]}
-                        className="flex-1"
+                        disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
                       >
-                        {isProcessingUpload[exercise.id] ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                        )}
-                        {isProcessingUpload[exercise.id] ? "Processing..." : "Submit Work"}
+                        + Fraction
                       </Button>
-                    )}
-                  </div>
-                  
-                  <Input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      handleFileUpload(exercise.id, e);
-                    }}
-                    className="hidden"
-                  />
-                  
-                  {uploadPreviews[exercise.id] && (
-                    <div className="mt-3">
-                      <img 
-                        src={uploadPreviews[exercise.id]} 
-                        alt="Uploaded work" 
-                        className="max-w-full max-h-48 object-contain rounded-lg border mx-auto"
-                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleInsertFraction(exercise.id, '-');
+                        }}
+                        disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                      >
+                        - Fraction
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleInsertFraction(exercise.id, '×');
+                        }}
+                        disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                      >
+                        × Fraction
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleInsertFraction(exercise.id, '÷');
+                        }}
+                        disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                      >
+                        ÷ Fraction
+                      </Button>
                     </div>
-                  )}
-                  
-                  <div className="text-xs text-muted-foreground">
-                    Supported: JPG, PNG, PDF • Max size: 10MB
                   </div>
-                </div>
 
-                <div className="text-center text-sm text-muted-foreground">
-                  <span>— OR type your answer below —</span>
-                </div>
+                  {/* Math Operators */}
+                  <div className="bg-muted/30 p-4 rounded-lg space-y-3">
+                    <div className="text-base font-medium">Math Operators:</div>
+                    <div className="grid grid-cols-4 gap-2">
+                      <Button
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          insertOperator(exercise.id, '+');
+                        }}
+                      >
+                        +
+                      </Button>
+                      <Button
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          insertOperator(exercise.id, '-');
+                        }}
+                      >
+                        -
+                      </Button>
+                      <Button
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          insertOperator(exercise.id, '×');
+                        }}
+                      >
+                        ×
+                      </Button>
+                      <Button
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          insertOperator(exercise.id, '÷');
+                        }}
+                      >
+                        ÷
+                      </Button>
+                      <Button
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          insertOperator(exercise.id, '=');
+                        }}
+                      >
+                        =
+                      </Button>
+                      <Button
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          insertOperator(exercise.id, '<');
+                        }}
+                      >
+                        &lt;
+                      </Button>
+                      <Button
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          insertOperator(exercise.id, '>');
+                        }}
+                      >
+                        &gt;
+                      </Button>
+                      <Button
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          insertOperator(exercise.id, '√');
+                        }}
+                      >
+                        √
+                      </Button>
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="text-sm font-medium mb-2 block">Type Your Answer:</label>
-                  <div className="space-y-2">
-                     {/* Simple Fraction Input */}
-                     <div className="p-3 bg-muted/50 rounded-lg space-y-3">
-                        <div className="text-sm font-medium">Build Fraction:</div>
-                        <div className="grid grid-cols-3 gap-2 items-end">
-                          <div>
-                            <label className="text-xs text-muted-foreground block mb-1">Numerator</label>
-                            <input
-                              type="text"
-                              value={fractionInput[exercise.id]?.numerator || ''}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                handleFractionInput(exercise.id, 'numerator', e.target.value);
-                              }}
-                              className="w-full px-2 py-1 text-sm border rounded text-center bg-background"
-                              placeholder="Top"
-                            />
-                          </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-light text-muted-foreground">/</div>
-                          </div>
-                          <div>
-                            <label className="text-xs text-muted-foreground block mb-1">Denominator</label>
-                            <input
-                              type="text"
-                              value={fractionInput[exercise.id]?.denominator || ''}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                handleFractionInput(exercise.id, 'denominator', e.target.value);
-                              }}
-                              className="w-full px-2 py-1 text-sm border rounded text-center bg-background"
-                              placeholder="Bottom"
-                            />
-                          </div>
+                  {/* Answer Display and Input */}
+                  <div className="space-y-3">
+                    <div className="text-base font-medium">Write your solution here:</div>
+                    <div className="min-h-20 p-4 border-2 rounded-md bg-background/50 font-mono text-lg flex items-center">
+                      {userAnswers[exercise.id] ? (
+                        <div className="w-full">
+                          {topic?.toLowerCase().includes('science') 
+                            ? userAnswers[exercise.id] 
+                            : renderMathExpression(userAnswers[exercise.id])}
                         </div>
-                        {fractionInput[exercise.id]?.numerator && fractionInput[exercise.id]?.denominator && (
-                          <div className="text-center">
-                            <div className="text-xs text-muted-foreground mb-1">Preview:</div>
-                            <Fraction 
-                              numerator={fractionInput[exercise.id].numerator} 
-                              denominator={fractionInput[exercise.id].denominator}
-                              className="text-lg"
-                            />
-                          </div>
-                        )}
-                        <div className="grid grid-cols-4 gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInsertFraction(exercise.id);
-                            }}
-                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                            className="col-span-4"
-                          >
-                            Add Fraction
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInsertFraction(exercise.id, '+');
-                            }}
-                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                          >
-                            + Fraction
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInsertFraction(exercise.id, '-');
-                            }}
-                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                          >
-                            - Fraction
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInsertFraction(exercise.id, '×');
-                            }}
-                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                          >
-                            × Fraction
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInsertFraction(exercise.id, '÷');
-                            }}
-                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                          >
-                            ÷ Fraction
-                          </Button>
-                        </div>
-                      </div>
-                     
-                     {/* Math Operators */}
-                     <div className="p-3 bg-muted/50 rounded-lg">
-                       <div className="text-sm font-medium mb-2">Math Operators:</div>
-                       <div className="grid grid-cols-4 gap-2">
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '+');
-                           }}
-                         >
-                           +
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '-');
-                           }}
-                         >
-                           -
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '×');
-                           }}
-                         >
-                           ×
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '÷');
-                           }}
-                         >
-                           ÷
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '=');
-                           }}
-                         >
-                           =
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '<');
-                           }}
-                         >
-                           &lt;
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '>');
-                           }}
-                         >
-                           &gt;
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '√');
-                           }}
-                         >
-                           √
-                         </Button>
-                       </div>
-                     </div>
-                     
-                     {/* Combined Answer Input */}
-                     <div className="space-y-2">
-                       <div className="text-sm font-medium">Write your solution here:</div>
-                        <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
-                          {userAnswers[exercise.id] ? (
-                            <div className="w-full">
-                              {topic?.toLowerCase().includes('science') 
-                                ? userAnswers[exercise.id] 
-                                : renderMathExpression(userAnswers[exercise.id])}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">Your answer will appear here as you type or use the tools above...</span>
-                          )}
-                        </div>
-                       <Textarea
-                         placeholder="Type your answer here or use the fraction tools and operators above..."
-                         value={userAnswers[exercise.id] || ''}
-                         onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
-                         className="min-h-20 font-mono"
-                         data-exercise-id={exercise.id}
-                       />
-                     </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Your answer will appear here as you type or use the tools above...</span>
+                      )}
+                    </div>
+                    <Textarea
+                      placeholder="Type your answer here or use the fraction tools and operators above..."
+                      value={userAnswers[exercise.id] || ''}
+                      onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
+                      className="min-h-20 font-mono"
+                      data-exercise-id={exercise.id}
+                    />
                   </div>
                 </div>
 
