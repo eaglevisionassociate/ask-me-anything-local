@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
-import { renderMathExpression } from "@/components/ui/fraction";
 
 interface MathStep {
   id: string;
@@ -74,11 +73,7 @@ export const MathExpressionBuilder = ({ onSubmit, onCancel }: MathExpressionBuil
     return expr.trim();
   };
 
-  const buildMathNotation = (step: MathStep): string => {
-    if (!step.beforeFraction && !step.addFraction && !step.afterFraction) {
-      return "";
-    }
-
+  const formatMathPreview = (step: MathStep): string => {
     let notation = step.beforeFraction;
     
     if (step.addFraction && step.numerator && step.denominator) {
@@ -91,11 +86,6 @@ export const MathExpressionBuilder = ({ onSubmit, onCancel }: MathExpressionBuil
       notation += step.afterFraction;
     }
     
-    return notation;
-  };
-
-  const formatMathPreview = (step: MathStep): string => {
-    const notation = buildMathNotation(step);
     if (!notation) return "";
     
     // Replace common math operators with nicer Unicode equivalents
@@ -104,8 +94,12 @@ export const MathExpressionBuilder = ({ onSubmit, onCancel }: MathExpressionBuil
       .replace(/\//g, "÷")          // Divide
       .replace(/\^2/g, "²")         // Squared
       .replace(/\^3/g, "³")         // Cubed
-      .replace(/\^(\d+)/g, "⁰¹²³⁴⁵⁶⁷⁸⁹"[Number('$1')] || `^$1`) // Superscript numbers
-      .replace(/sqrt/g, "√")        // Square root
+      .replace(/\^(\d+)/g, (match, p1) => {
+        const superscripts = "⁰¹²³⁴⁵⁶⁷⁸⁹";
+        return p1.split('').map(d => superscripts[parseInt(d)] || `^${d}`).join('');
+      })
+      .replace(/sqrt\(([^)]+)\)/g, "√$1") // Square root with parentheses
+      .replace(/sqrt/g, "√")        // Square root without parentheses
       .replace(/pi/g, "π")          // Pi
       .replace(/theta/g, "θ")       // Theta
       .replace(/alpha/g, "α")       // Alpha
@@ -137,6 +131,7 @@ export const MathExpressionBuilder = ({ onSubmit, onCancel }: MathExpressionBuil
       <div className="space-y-4 max-h-[400px] overflow-y-auto">
         {steps.map((step, index) => {
           const expressionStr = buildExpression(step);
+          const formattedPreview = formatMathPreview(step);
           const hasContent = expressionStr.trim().length > 0;
           
           return (
@@ -201,8 +196,8 @@ export const MathExpressionBuilder = ({ onSubmit, onCancel }: MathExpressionBuil
                   <div className="bg-muted p-3 rounded border border-border">
                     <p className="text-xs text-muted-foreground mb-1">Step Preview:</p>
                     <div className="min-h-[40px] flex items-center justify-center p-2 bg-white dark:bg-gray-800 rounded border">
-                      <div className="text-lg text-foreground text-center">
-                        {renderMathExpression(expressionStr)}
+                      <div className="text-lg text-foreground text-center font-math">
+                        {formattedPreview || "No expression to display"}
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
