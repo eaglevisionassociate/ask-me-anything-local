@@ -136,7 +136,8 @@ export const MathExpressionBuilder = ({ onSubmit, onCancel }: MathExpressionBuil
 
       <div className="space-y-4 max-h-[400px] overflow-y-auto">
         {steps.map((step, index) => {
-          const mathPreview = formatMathPreview(step);
+          const expressionStr = buildExpression(step);
+          const hasContent = expressionStr.trim().length > 0;
           
           return (
             <Card key={step.id} className="p-4 bg-background border-border space-y-3">
@@ -196,16 +197,16 @@ export const MathExpressionBuilder = ({ onSubmit, onCancel }: MathExpressionBuil
                   />
                 </div>
 
-                {mathPreview && (
+                {hasContent && (
                   <div className="bg-muted p-3 rounded border border-border">
                     <p className="text-xs text-muted-foreground mb-1">Step Preview:</p>
                     <div className="min-h-[40px] flex items-center justify-center p-2 bg-white dark:bg-gray-800 rounded border">
-                      <div className="text-lg font-mono text-foreground text-center">
-                        {renderMathExpression(buildExpression(step))}
+                      <div className="text-lg text-foreground text-center">
+                        {renderMathExpression(expressionStr)}
                       </div>
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
-                      Raw: <code className="bg-border px-1 rounded">{buildExpression(step)}</code>
+                      Raw: <code className="bg-border px-1 rounded">{expressionStr}</code>
                     </p>
                   </div>
                 )}
