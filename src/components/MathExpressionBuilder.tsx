@@ -73,40 +73,61 @@ export const MathExpressionBuilder = ({ onSubmit, onCancel }: MathExpressionBuil
     return expr.trim();
   };
 
-  const formatMathPreview = (step: MathStep): string => {
-    let notation = step.beforeFraction;
+  const formatMathPreview = (step: MathStep): JSX.Element => {
+    const parts: JSX.Element[] = [];
     
+    // Add before fraction part
+    if (step.beforeFraction.trim()) {
+      parts.push(
+        <span key="before">{formatMathText(step.beforeFraction)}</span>
+      );
+    }
+    
+    // Add fraction part
     if (step.addFraction && step.numerator && step.denominator) {
-      if (notation) notation += " + ";
-      notation += `${step.numerator}∕${step.denominator}`; // Using fraction slash character
+      if (parts.length > 0) {
+        parts.push(<span key="plus"> + </span>);
+      }
+      parts.push(
+        <span key="fraction" className="inline-flex flex-col items-center mx-1">
+          <span className="border-b border-foreground pb-0.5">{formatMathText(step.numerator)}</span>
+          <span className="pt-0.5">{formatMathText(step.denominator)}</span>
+        </span>
+      );
     }
     
-    if (step.afterFraction) {
-      if (notation) notation += " ";
-      notation += step.afterFraction;
+    // Add after fraction part
+    if (step.afterFraction.trim()) {
+      if (parts.length > 0) {
+        parts.push(<span key="space"> </span>);
+      }
+      parts.push(
+        <span key="after">{formatMathText(step.afterFraction)}</span>
+      );
     }
     
-    if (!notation) return "";
-    
-    // Replace common math operators with nicer Unicode equivalents
-    return notation
-      .replace(/\*/g, "×")          // Multiply
-      .replace(/\//g, "÷")          // Divide
-      .replace(/\^2/g, "²")         // Squared
-      .replace(/\^3/g, "³")         // Cubed
+    return <div className="inline-flex items-center">{parts}</div>;
+  };
+
+  const formatMathText = (text: string): string => {
+    return text
+      .replace(/\*/g, "×")
+      .replace(/\//g, "÷")
+      .replace(/\^2/g, "²")
+      .replace(/\^3/g, "³")
       .replace(/\^(\d+)/g, (match, p1) => {
         const superscripts = "⁰¹²³⁴⁵⁶⁷⁸⁹";
         return p1.split('').map(d => superscripts[parseInt(d)] || `^${d}`).join('');
       })
-      .replace(/sqrt\(([^)]+)\)/g, "√$1") // Square root with parentheses
-      .replace(/sqrt/g, "√")        // Square root without parentheses
-      .replace(/pi/g, "π")          // Pi
-      .replace(/theta/g, "θ")       // Theta
-      .replace(/alpha/g, "α")       // Alpha
-      .replace(/beta/g, "β")        // Beta
-      .replace(/gamma/g, "γ")       // Gamma
-      .replace(/delta/g, "δ")       // Delta
-      .replace(/infinity/g, "∞");   // Infinity
+      .replace(/sqrt\(([^)]+)\)/g, "√$1")
+      .replace(/sqrt/g, "√")
+      .replace(/pi/g, "π")
+      .replace(/theta/g, "θ")
+      .replace(/alpha/g, "α")
+      .replace(/beta/g, "β")
+      .replace(/gamma/g, "γ")
+      .replace(/delta/g, "δ")
+      .replace(/infinity/g, "∞");
   };
 
   const handleSubmit = () => {
@@ -149,7 +170,7 @@ export const MathExpressionBuilder = ({ onSubmit, onCancel }: MathExpressionBuil
                   <Input
                     value={step.beforeFraction}
                     onChange={(e) => updateStep(step.id, "beforeFraction", e.target.value)}
-                    placeholder="e.g., x + 2"
+                    placeholder="e.g., 12+45"
                     className="bg-input border-border"
                   />
                 </div>
@@ -170,13 +191,13 @@ export const MathExpressionBuilder = ({ onSubmit, onCancel }: MathExpressionBuil
                     <Input
                       value={step.numerator}
                       onChange={(e) => updateStep(step.id, "numerator", e.target.value)}
-                      placeholder="Numerator (e.g., 3x)"
+                      placeholder="Numerator (e.g., 11-12)"
                       className="bg-input border-border"
                     />
                     <Input
                       value={step.denominator}
                       onChange={(e) => updateStep(step.id, "denominator", e.target.value)}
-                      placeholder="Denominator (e.g., 4y)"
+                      placeholder="Denominator (e.g., 12-12)"
                       className="bg-input border-border"
                     />
                   </div>
