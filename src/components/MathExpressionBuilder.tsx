@@ -4,7 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
-import { renderMathExpression } from "@/components/ui/fraction";
 
 interface MathStep {
   id: string;
@@ -199,10 +198,10 @@ export const MathExpressionBuilder = ({ onSubmit, onCancel }: MathExpressionBuil
                 {mathPreview && (
                   <div className="bg-muted p-3 rounded border border-border">
                     <p className="text-xs text-muted-foreground mb-1">Step Preview:</p>
-                    <div className="min-h-[40px] flex items-center justify-center p-2 bg-white dark:bg-gray-800 rounded border">
-                      <div className="text-lg font-mono text-foreground text-center">
-                        {renderMathExpression(buildExpression(step))}
-                      </div>
+                    <div className="min-h-[40px] flex items-center justify-center p-2 bg-white rounded border">
+                      <p className="text-lg font-mono text-foreground text-center">
+                        {mathPreview || " "}
+                      </p>
                     </div>
                     <p className="text-xs text-muted-foreground mt-2">
                       Raw: <code className="bg-border px-1 rounded">{buildExpression(step)}</code>
