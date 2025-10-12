@@ -11,7 +11,6 @@ import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Pri
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatMathExpression } from '@/lib/fractionUtils';
 import { Fraction, renderMathExpression } from '@/components/ui/fraction';
-
 import { useToast } from "@/hooks/use-toast";
 import Tesseract from 'tesseract.js';
 import { usePuterAI } from '@/hooks/usePuterAI';
@@ -72,7 +71,7 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
 
   const handleInsertFraction = (exerciseId: string, operator?: string) => {
     const fraction = fractionInput[exerciseId];
-    if (!fraction.numerator || !fraction.denominator) return;
+    if (!fraction?.numerator || !fraction?.denominator) return;
 
     // Use a user-friendly fraction format instead of LaTeX
     const fractionText = `(${fraction.numerator})/(${fraction.denominator})`;
@@ -112,7 +111,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
     handleAnswerChange(exerciseId, newAnswer);
   };
 
-
   const handleFileUpload = (exerciseId: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -127,14 +125,29 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
       return;
     }
 
+    // Validate file size (10MB max)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File Too Large",
+        description: "Please select a file smaller than 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setUploadedFiles(prev => ({ ...prev, [exerciseId]: file }));
     
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setUploadPreviews(prev => ({ ...prev, [exerciseId]: e.target?.result as string }));
-    };
-    reader.readAsDataURL(file);
+    // Create preview for images
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setUploadPreviews(prev => ({ ...prev, [exerciseId]: e.target?.result as string }));
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // For PDF files, show a placeholder
+      setUploadPreviews(prev => ({ ...prev, [exerciseId]: 'pdf-placeholder' }));
+    }
   };
 
   const processUploadedWork = async (exerciseId: string) => {
@@ -151,6 +164,15 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
           logger: m => console.log(m)
         });
         extractedText = result.data.text;
+      } else if (file.type === 'application/pdf') {
+        // For PDF files, we'll use a placeholder text since PDF processing is more complex
+        extractedText = "[PDF content would be processed here]";
+        toast({
+          title: "PDF Processing",
+          description: "PDF processing requires additional setup. Please upload an image for now.",
+          variant: "default",
+        });
+        return;
       }
 
       const exercise = exercises.find(e => e.id === exerciseId);
@@ -425,7 +447,7 @@ Respond ONLY with valid JSON in this exact format:
   const handleGenerateExercise = async () => {
     const newExercises = await generateExercise({
       lessonId,
-      topic: 'mathematics',
+      topic: topic || 'mathematics',
       difficulty: 'medium',
       count: 2,
     });
@@ -541,14 +563,14 @@ Respond ONLY with valid JSON in this exact format:
   if (exercises.length === 0) {
     return (
       <Card>
-      <CardContent className="pt-6">
-        <div className="text-center text-muted-foreground">
-          <Brain className="w-8 h-8 mx-auto mb-2" />
-          <p>No exercises available yet.</p>
-          <p className="text-sm">Ask the AI tutor to create some practice problems!</p>
-        </div>
-      </CardContent>
-    </Card>
+        <CardContent className="pt-6">
+          <div className="text-center text-muted-foreground">
+            <Brain className="w-8 h-8 mx-auto mb-2" />
+            <p>No exercises available yet.</p>
+            <p className="text-sm">Ask the AI tutor to create some practice problems!</p>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -615,7 +637,7 @@ Respond ONLY with valid JSON in this exact format:
           
           <CardContent className="space-y-4">
             <div className="prose prose-sm max-w-none">
-                <div className="text-foreground whitespace-pre-wrap text-lg">
+              <div className="text-foreground whitespace-pre-wrap text-lg">
                 {topic?.toLowerCase().includes('science') 
                   ? exercise.question 
                   : renderMathExpression(exercise.question)}
@@ -679,13 +701,22 @@ Respond ONLY with valid JSON in this exact format:
                     className="hidden"
                   />
                   
-                  {uploadPreviews[exercise.id] && (
+                  {uploadPreviews[exercise.id] && uploadPreviews[exercise.id] !== 'pdf-placeholder' && (
                     <div className="mt-3">
                       <img 
                         src={uploadPreviews[exercise.id]} 
                         alt="Uploaded work" 
                         className="max-w-full max-h-48 object-contain rounded-lg border mx-auto"
                       />
+                    </div>
+                  )}
+                  
+                  {uploadPreviews[exercise.id] === 'pdf-placeholder' && (
+                    <div className="mt-3 p-4 border rounded-lg text-center">
+                      <div className="text-sm font-medium">PDF File Selected</div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        {uploadedFiles[exercise.id]?.name}
+                      </div>
                     </div>
                   )}
                   
@@ -701,231 +732,231 @@ Respond ONLY with valid JSON in this exact format:
                 <div>
                   <label className="text-sm font-medium mb-2 block">Type Your Answer:</label>
                   <div className="space-y-2">
-                     {/* Simple Fraction Input */}
-                     <div className="p-3 bg-muted/50 rounded-lg space-y-3">
-                        <div className="text-sm font-medium">Build Fraction:</div>
-                        <div className="grid grid-cols-3 gap-2 items-end">
-                          <div>
-                            <label className="text-xs text-muted-foreground block mb-1">Numerator</label>
-                            <input
-                              type="text"
-                              value={fractionInput[exercise.id]?.numerator || ''}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                handleFractionInput(exercise.id, 'numerator', e.target.value);
-                              }}
-                              className="w-full px-2 py-1 text-sm border rounded text-center bg-background"
-                              placeholder="Top"
-                            />
-                          </div>
-                          <div className="text-center">
-                            <div className="text-2xl font-light text-muted-foreground">/</div>
-                          </div>
-                          <div>
-                            <label className="text-xs text-muted-foreground block mb-1">Denominator</label>
-                            <input
-                              type="text"
-                              value={fractionInput[exercise.id]?.denominator || ''}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                handleFractionInput(exercise.id, 'denominator', e.target.value);
-                              }}
-                              className="w-full px-2 py-1 text-sm border rounded text-center bg-background"
-                              placeholder="Bottom"
-                            />
-                          </div>
+                    {/* Simple Fraction Input */}
+                    <div className="p-3 bg-muted/50 rounded-lg space-y-3">
+                      <div className="text-sm font-medium">Build Fraction:</div>
+                      <div className="grid grid-cols-3 gap-2 items-end">
+                        <div>
+                          <label className="text-xs text-muted-foreground block mb-1">Numerator</label>
+                          <input
+                            type="text"
+                            value={fractionInput[exercise.id]?.numerator || ''}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              handleFractionInput(exercise.id, 'numerator', e.target.value);
+                            }}
+                            className="w-full px-2 py-1 text-sm border rounded text-center bg-background"
+                            placeholder="Top"
+                          />
                         </div>
-                        {fractionInput[exercise.id]?.numerator && fractionInput[exercise.id]?.denominator && (
-                          <div className="text-center">
-                            <div className="text-xs text-muted-foreground mb-1">Preview:</div>
-                            <Fraction 
-                              numerator={fractionInput[exercise.id].numerator} 
-                              denominator={fractionInput[exercise.id].denominator}
-                              className="text-lg"
-                            />
-                          </div>
-                        )}
-                        <div className="grid grid-cols-4 gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={(e) => {
+                        <div className="text-center">
+                          <div className="text-2xl font-light text-muted-foreground">/</div>
+                        </div>
+                        <div>
+                          <label className="text-xs text-muted-foreground block mb-1">Denominator</label>
+                          <input
+                            type="text"
+                            value={fractionInput[exercise.id]?.denominator || ''}
+                            onChange={(e) => {
                               e.stopPropagation();
-                              handleInsertFraction(exercise.id);
+                              handleFractionInput(exercise.id, 'denominator', e.target.value);
                             }}
-                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                            className="col-span-4"
-                          >
-                            Add Fraction
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInsertFraction(exercise.id, '+');
-                            }}
-                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                          >
-                            + Fraction
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInsertFraction(exercise.id, '-');
-                            }}
-                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                          >
-                            - Fraction
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInsertFraction(exercise.id, '×');
-                            }}
-                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                          >
-                            × Fraction
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleInsertFraction(exercise.id, '÷');
-                            }}
-                            disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                          >
-                            ÷ Fraction
-                          </Button>
+                            className="w-full px-2 py-1 text-sm border rounded text-center bg-background"
+                            placeholder="Bottom"
+                          />
                         </div>
                       </div>
-                     
-                     {/* Math Operators */}
-                     <div className="p-3 bg-muted/50 rounded-lg">
-                       <div className="text-sm font-medium mb-2">Math Operators:</div>
-                       <div className="grid grid-cols-4 gap-2">
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '+');
-                           }}
-                         >
-                           +
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '-');
-                           }}
-                         >
-                           -
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '×');
-                           }}
-                         >
-                           ×
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '÷');
-                           }}
-                         >
-                           ÷
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '=');
-                           }}
-                         >
-                           =
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '<');
-                           }}
-                         >
-                           &lt;
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '>');
-                           }}
-                         >
-                           &gt;
-                         </Button>
-                         <Button
-                           type="button"
-                           size="sm"
-                           variant="outline"
-                           onClick={(e) => {
-                             e.stopPropagation();
-                             insertOperator(exercise.id, '√');
-                           }}
-                         >
-                           √
-                         </Button>
-                       </div>
-                     </div>
-                     
-                     {/* Combined Answer Input */}
-                     <div className="space-y-2">
-                       <div className="text-sm font-medium">Write your solution here:</div>
-                        <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
-                          {userAnswers[exercise.id] ? (
-                            <div className="w-full">
-                              {topic?.toLowerCase().includes('science') 
-                                ? userAnswers[exercise.id] 
-                                : renderMathExpression(userAnswers[exercise.id])}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground">Your answer will appear here as you type or use the tools above...</span>
-                          )}
+                      {fractionInput[exercise.id]?.numerator && fractionInput[exercise.id]?.denominator && (
+                        <div className="text-center">
+                          <div className="text-xs text-muted-foreground mb-1">Preview:</div>
+                          <Fraction 
+                            numerator={fractionInput[exercise.id].numerator} 
+                            denominator={fractionInput[exercise.id].denominator}
+                            className="text-lg"
+                          />
                         </div>
-                       <Textarea
-                         placeholder="Type your answer here or use the fraction tools and operators above..."
-                         value={userAnswers[exercise.id] || ''}
-                         onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
-                         className="min-h-20 font-mono"
-                         data-exercise-id={exercise.id}
-                       />
-                     </div>
+                      )}
+                      <div className="grid grid-cols-4 gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInsertFraction(exercise.id);
+                          }}
+                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                          className="col-span-4"
+                        >
+                          Add Fraction
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInsertFraction(exercise.id, '+');
+                          }}
+                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                        >
+                          + Fraction
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInsertFraction(exercise.id, '-');
+                          }}
+                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                        >
+                          - Fraction
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInsertFraction(exercise.id, '×');
+                          }}
+                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                        >
+                          × Fraction
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleInsertFraction(exercise.id, '÷');
+                          }}
+                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
+                        >
+                          ÷ Fraction
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Math Operators */}
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <div className="text-sm font-medium mb-2">Math Operators:</div>
+                      <div className="grid grid-cols-4 gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            insertOperator(exercise.id, '+');
+                          }}
+                        >
+                          +
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            insertOperator(exercise.id, '-');
+                          }}
+                        >
+                          -
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            insertOperator(exercise.id, '×');
+                          }}
+                        >
+                          ×
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            insertOperator(exercise.id, '÷');
+                          }}
+                        >
+                          ÷
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            insertOperator(exercise.id, '=');
+                          }}
+                        >
+                          =
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            insertOperator(exercise.id, '<');
+                          }}
+                        >
+                          &lt;
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            insertOperator(exercise.id, '>');
+                          }}
+                        >
+                          &gt;
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            insertOperator(exercise.id, '√');
+                          }}
+                        >
+                          √
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Combined Answer Input */}
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium">Write your solution here:</div>
+                      <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
+                        {userAnswers[exercise.id] ? (
+                          <div className="w-full">
+                            {topic?.toLowerCase().includes('science') 
+                              ? userAnswers[exercise.id] 
+                              : renderMathExpression(userAnswers[exercise.id])}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground">Your answer will appear here as you type or use the tools above...</span>
+                        )}
+                      </div>
+                      <Textarea
+                        placeholder="Type your answer here or use the fraction tools and operators above..."
+                        value={userAnswers[exercise.id] || ''}
+                        onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
+                        className="min-h-20 font-mono"
+                        data-exercise-id={exercise.id}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -976,44 +1007,44 @@ Respond ONLY with valid JSON in this exact format:
                           ? "🎉 Excellent work! You got it right!" 
                           : answerFeedback[exercise.id].feedback}
                       </p>
-                     </div>
-                     
-                     {answerFeedback[exercise.id].explanationSteps && (
-                       <div className="mt-3 p-3 bg-gray-50 border rounded-lg">
-                         <h4 className="font-medium text-sm mb-2">📖 Step-by-step answer processing:</h4>
-                         <div className="space-y-1 text-xs font-mono">
-                           {answerFeedback[exercise.id].explanationSteps.map((step, index) => (
-                             <div key={index} className={step === "" ? "h-2" : ""}>
-                               {step && <p>{step}</p>}
-                             </div>
-                           ))}
-                         </div>
-                       </div>
-                     )}
-                   </div>
-                 )}
+                    </div>
+                    
+                    {answerFeedback[exercise.id].explanationSteps && (
+                      <div className="mt-3 p-3 bg-gray-50 border rounded-lg">
+                        <h4 className="font-medium text-sm mb-2">📖 Step-by-step answer processing:</h4>
+                        <div className="space-y-1 text-xs font-mono">
+                          {answerFeedback[exercise.id].explanationSteps.map((step, index) => (
+                            <div key={index} className={step === "" ? "h-2" : ""}>
+                              {step && <p>{step}</p>}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {showAnswers[exercise.id] && (
                   <div className="bg-muted p-4 rounded-lg space-y-2">
-                     <div>
-                        <h4 className="font-medium text-sm mb-1">Correct Answer:</h4>
-                        <div className="text-lg whitespace-pre-wrap">
+                    <div>
+                      <h4 className="font-medium text-sm mb-1">Correct Answer:</h4>
+                      <div className="text-lg whitespace-pre-wrap">
+                        {topic?.toLowerCase().includes('science') 
+                          ? exercise.answer 
+                          : (renderMathExpression(exercise.answer) || formatMathExpression(exercise.answer))}
+                      </div>
+                    </div>
+                    
+                    {exercise.explanation && (
+                      <div>
+                        <h4 className="font-medium text-sm mb-1">Explanation:</h4>
+                        <div className="text-sm text-muted-foreground whitespace-pre-wrap">
                           {topic?.toLowerCase().includes('science') 
-                            ? exercise.answer 
-                            : (renderMathExpression(exercise.answer) || formatMathExpression(exercise.answer))}
+                            ? exercise.explanation 
+                            : (renderMathExpression(exercise.explanation) || formatMathExpression(exercise.explanation))}
                         </div>
-                     </div>
-                     
-                     {exercise.explanation && (
-                       <div>
-                          <h4 className="font-medium text-sm mb-1">Explanation:</h4>
-                          <div className="text-sm text-muted-foreground whitespace-pre-wrap">
-                            {topic?.toLowerCase().includes('science') 
-                              ? exercise.explanation 
-                              : (renderMathExpression(exercise.explanation) || formatMathExpression(exercise.explanation))}
-                          </div>
-                       </div>
-                     )}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
