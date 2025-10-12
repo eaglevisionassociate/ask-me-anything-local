@@ -7,11 +7,11 @@ import { Input } from '@/components/ui/input';
 import { useExercises, Exercise } from '@/hooks/useExercises';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
-import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer, Pencil, Camera, Upload } from 'lucide-react';
+import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer, Camera, Upload } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatMathExpression } from '@/lib/fractionUtils';
 import { Fraction, renderMathExpression } from '@/components/ui/fraction';
-import { DrawingPad } from "./DrawingPad";
+
 import { useToast } from "@/hooks/use-toast";
 import Tesseract from 'tesseract.js';
 import { usePuterAI } from '@/hooks/usePuterAI';
@@ -36,7 +36,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
   const [submittedAnswers, setSubmittedAnswers] = useState<{ [key: string]: boolean }>({});
   const [answerFeedback, setAnswerFeedback] = useState<{ [key: string]: { isCorrect: boolean; feedback: string; explanationSteps?: string[] } }>({});
   const [fractionInput, setFractionInput] = useState<{ [key: string]: { numerator: string; denominator: string; isEditing: boolean } }>({});
-  const [showDrawing, setShowDrawing] = useState<{ [key: string]: boolean }>({});
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: File | null }>({});
   const [uploadPreviews, setUploadPreviews] = useState<{ [key: string]: string }>({});
   const [isProcessingUpload, setIsProcessingUpload] = useState<{ [key: string]: boolean }>({});
@@ -50,14 +49,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
       setFractionInput(prev => ({
         ...prev,
         [exercise.id]: { numerator: '', denominator: '', isEditing: false }
-      }));
-    }
-    
-    // Auto-show drawing pad for geometry exercises
-    if (isGeometryExercise(exercise.question) && !showDrawing[exercise.id]) {
-      setShowDrawing(prev => ({
-        ...prev,
-        [exercise.id]: true
       }));
     }
   };
@@ -121,28 +112,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
     handleAnswerChange(exerciseId, newAnswer);
   };
 
-  const isGeometryExercise = (question: string): boolean => {
-    const geometryKeywords = [
-      'draw', 'sketch', 'construct', 'diagram', 'angle', 'triangle', 
-      'rectangle', 'circle', 'square', 'polygon', 'line', 'point',
-      'perpendicular', 'parallel', 'bisector', 'median', 'altitude'
-    ];
-    return geometryKeywords.some(keyword => 
-      question.toLowerCase().includes(keyword.toLowerCase())
-    );
-  };
-
-  const handleDrawingSave = (exerciseId: string, dataURL: string) => {
-    // Here you could save the drawing or analyze it
-    // For now, just show a success message
-    setAnswerFeedback(prev => ({
-      ...prev,
-      [exerciseId]: {
-        isCorrect: true,
-        feedback: "Drawing saved! Great work on your geometric construction."
-      }
-    }));
-  };
 
   const handleFileUpload = (exerciseId: string, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -473,7 +442,6 @@ Respond ONLY with valid JSON in this exact format:
     setSubmittedAnswers({});
     setAnswerFeedback({});
     setFractionInput({});
-    setShowDrawing({});
     setUploadedFiles({});
     setUploadPreviews({});
     setIsProcessingUpload({});
@@ -657,37 +625,6 @@ Respond ONLY with valid JSON in this exact format:
             {selectedExercise === exercise.id && (
               <div className="space-y-4 border-t pt-4" onClick={(e) => e.stopPropagation()}>
                 
-                {/* Drawing Pad for Geometry Exercises */}
-                {isGeometryExercise(exercise.question) && (
-                  <div className="space-y-3 bg-primary/5 p-4 rounded-lg border-2 border-primary/20">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <div className="flex items-center gap-2">
-                        <Pencil className="w-5 h-5 text-primary" />
-                        <span className="text-sm font-semibold text-primary">✏️ Use Drawing Pad Below</span>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowDrawing(prev => ({ 
-                          ...prev, 
-                          [exercise.id]: !prev[exercise.id] 
-                        }))}
-                      >
-                        {showDrawing[exercise.id] ? "Hide Drawing" : "Show Drawing"}
-                      </Button>
-                    </div>
-                    
-                    {showDrawing[exercise.id] && (
-                      <div className="w-full">
-                        <DrawingPad 
-                          height={300}
-                          onSave={(dataURL) => handleDrawingSave(exercise.id, dataURL)} 
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-
                 {/* Photo/PDF Upload Option */}
                 <div className="space-y-3 bg-blue-50 dark:bg-blue-950/30 p-4 rounded-lg border-2 border-blue-200 dark:border-blue-800">
                   <div className="flex items-center gap-2 mb-2">
