@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { Canvas as FabricCanvas, Circle, Rect, Line, Triangle, Polygon, Ellipse, FabricText } from "fabric";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { Canvas as FabricCanvas, Circle, Rect, Line, Triangle, Polygon, Ellipse, FabricText, Group } from "fabric";
 import { Button } from "@/components/ui/button";
 import { 
   Pencil, 
@@ -19,7 +19,9 @@ import {
   Trash2,
   Grid3X3,
   Box,
-  Cylinder
+  Cylinder,
+  Ruler,
+  PaintBucket
 } from "lucide-react";
 
 interface KidDrawingPadProps {
@@ -39,6 +41,10 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [showGrid, setShowGrid] = useState(false);
+  const [fillShapes, setFillShapes] = useState(false);
+  const [rulerStart, setRulerStart] = useState<{ x: number; y: number } | null>(null);
+  const [rulerLine, setRulerLine] = useState<Line | null>(null);
+  const [rulerLabel, setRulerLabel] = useState<FabricText | null>(null);
 
   // Kid-friendly vibrant colors
   const colors = [
@@ -80,6 +86,7 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
     { id: "draw", label: "✏️ Draw", icon: Pencil, description: "Draw freely" },
     { id: "erase", label: "🧹 Eraser", icon: Eraser, description: "Erase mistakes" },
     { id: "text", label: "Aa Text", icon: Type, description: "Add words" },
+    { id: "ruler", label: "📏 Ruler", icon: Ruler, description: "Measure distances" },
   ];
 
   // Draw grid on canvas
@@ -173,10 +180,131 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
     } else if (activeTool === "erase") {
       fabricCanvas.freeDrawingBrush.color = "#ffffff";
       fabricCanvas.freeDrawingBrush.width = brushSize * 3;
-    } else if (activeTool === "select") {
+    } else if (activeTool === "select" || activeTool === "ruler") {
       fabricCanvas.isDrawingMode = false;
     }
   }, [activeTool, activeColor, brushSize, fabricCanvas]);
+
+  // Ruler tool event handlers
+  useEffect(() => {
+    if (!fabricCanvas) return;
+
+    const handleMouseDown = (opt: any) => {
+      if (activeTool !== "ruler") return;
+      const pointer = fabricCanvas.getPointer(opt.e);
+      setRulerStart({ x: pointer.x, y: pointer.y });
+      
+      // Create temporary line
+      const line = new Line([pointer.x, pointer.y, pointer.x, pointer.y], {
+        stroke: "#ef4444",
+        strokeWidth: 2,
+        strokeDashArray: [5, 5],
+        selectable: false,
+        evented: false,
+      });
+      (line as any).isRulerLine = true;
+      fabricCanvas.add(line);
+      setRulerLine(line);
+      
+      // Create label
+      const label = new FabricText("0 px", {
+        left: pointer.x,
+        top: pointer.y - 20,
+        fontSize: 14,
+        fill: "#ef4444",
+        fontFamily: "Arial",
+        fontWeight: "bold",
+        backgroundColor: "rgba(255,255,255,0.9)",
+        selectable: false,
+        evented: false,
+      });
+      (label as any).isRulerLabel = true;
+      fabricCanvas.add(label);
+      setRulerLabel(label);
+    };
+
+    const handleMouseMove = (opt: any) => {
+      if (activeTool !== "ruler" || !rulerStart || !rulerLine || !rulerLabel) return;
+      const pointer = fabricCanvas.getPointer(opt.e);
+      
+      // Update line endpoint
+      rulerLine.set({ x2: pointer.x, y2: pointer.y });
+      
+      // Calculate distance
+      const dx = pointer.x - rulerStart.x;
+      const dy = pointer.y - rulerStart.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      // Update label
+      const midX = (rulerStart.x + pointer.x) / 2;
+      const midY = (rulerStart.y + pointer.y) / 2;
+      rulerLabel.set({
+        left: midX,
+        top: midY - 20,
+        text: `${Math.round(distance)} px`,
+      });
+      
+      fabricCanvas.renderAll();
+    };
+
+    const handleMouseUp = (opt: any) => {
+      if (activeTool !== "ruler" || !rulerStart || !rulerLine || !rulerLabel) return;
+      const pointer = fabricCanvas.getPointer(opt.e);
+      
+      // Calculate final distance
+      const dx = pointer.x - rulerStart.x;
+      const dy = pointer.y - rulerStart.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance > 10) {
+        // Keep the measurement on canvas
+        rulerLine.set({ selectable: true, evented: true });
+        (rulerLine as any).isRulerLine = false;
+        rulerLabel.set({ selectable: true, evented: true });
+        (rulerLabel as any).isRulerLabel = false;
+        
+        // Add endpoint markers
+        const startMarker = new Circle({
+          left: rulerStart.x - 4,
+          top: rulerStart.y - 4,
+          radius: 4,
+          fill: "#ef4444",
+          selectable: false,
+          evented: false,
+        });
+        const endMarker = new Circle({
+          left: pointer.x - 4,
+          top: pointer.y - 4,
+          radius: 4,
+          fill: "#ef4444",
+          selectable: false,
+          evented: false,
+        });
+        fabricCanvas.add(startMarker, endMarker);
+        
+        saveToHistory();
+      } else {
+        // Remove if too short
+        fabricCanvas.remove(rulerLine);
+        fabricCanvas.remove(rulerLabel);
+      }
+      
+      setRulerStart(null);
+      setRulerLine(null);
+      setRulerLabel(null);
+      fabricCanvas.renderAll();
+    };
+
+    fabricCanvas.on("mouse:down", handleMouseDown);
+    fabricCanvas.on("mouse:move", handleMouseMove);
+    fabricCanvas.on("mouse:up", handleMouseUp);
+
+    return () => {
+      fabricCanvas.off("mouse:down", handleMouseDown);
+      fabricCanvas.off("mouse:move", handleMouseMove);
+      fabricCanvas.off("mouse:up", handleMouseUp);
+    };
+  }, [fabricCanvas, activeTool, rulerStart, rulerLine, rulerLabel]);
 
   const saveToHistory = () => {
     if (!fabricCanvas) return;
@@ -462,6 +590,7 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
 
     const centerX = (fabricCanvas.width || 300) / 2 - 40;
     const centerY = (fabricCanvas.height || 200) / 2 - 40;
+    const shapeFill = fillShapes ? activeColor + "40" : "transparent"; // 40 = 25% opacity
 
     let shape;
     
@@ -470,7 +599,7 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
         shape = new Rect({
           left: centerX,
           top: centerY,
-          fill: "transparent",
+          fill: shapeFill,
           stroke: activeColor,
           strokeWidth: 3,
           width: 80,
@@ -483,7 +612,7 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
         shape = new Circle({
           left: centerX,
           top: centerY,
-          fill: "transparent",
+          fill: shapeFill,
           stroke: activeColor,
           strokeWidth: 3,
           radius: 40,
@@ -493,7 +622,7 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
         shape = new Triangle({
           left: centerX,
           top: centerY,
-          fill: "transparent",
+          fill: shapeFill,
           stroke: activeColor,
           strokeWidth: 3,
           width: 80,
@@ -543,7 +672,7 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
         shape = new Polygon(points, {
           left: centerX,
           top: centerY,
-          fill: "transparent",
+          fill: shapeFill,
           stroke: activeColor,
           strokeWidth: 3,
         });
@@ -552,7 +681,7 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
         shape = new Ellipse({
           left: centerX,
           top: centerY,
-          fill: "transparent",
+          fill: shapeFill,
           stroke: activeColor,
           strokeWidth: 3,
           rx: 50,
@@ -571,7 +700,7 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
         shape = new Polygon(pentPoints, {
           left: centerX,
           top: centerY,
-          fill: "transparent",
+          fill: shapeFill,
           stroke: activeColor,
           strokeWidth: 3,
         });
@@ -683,6 +812,18 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
           <span className="hidden sm:inline">Grid</span>
         </Button>
         
+        {/* Fill Shapes Toggle */}
+        <Button
+          variant={fillShapes ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFillShapes(!fillShapes)}
+          className={`text-xs gap-1 ${fillShapes ? 'ring-2 ring-purple-500 bg-purple-600 hover:bg-purple-700' : ''}`}
+          title="Fill shapes with color"
+        >
+          <PaintBucket className="w-4 h-4" />
+          <span className="hidden sm:inline">Fill</span>
+        </Button>
+        
         {/* Brush Size */}
         <div className="flex items-center gap-1 bg-white dark:bg-gray-800 rounded-lg px-2 py-1 border">
           <span className="text-xs">Size:</span>
@@ -696,6 +837,24 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
           />
         </div>
       </div>
+      
+      {/* Ruler instruction when active */}
+      {activeTool === "ruler" && (
+        <div className="text-center mb-2">
+          <span className="text-xs bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 px-3 py-1 rounded-full">
+            📏 Click and drag to measure distance in pixels
+          </span>
+        </div>
+      )}
+      
+      {/* Fill indicator */}
+      {fillShapes && (
+        <div className="text-center mb-2">
+          <span className="text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300 px-3 py-1 rounded-full inline-flex items-center gap-1">
+            <PaintBucket className="w-3 h-3" /> Shapes will be filled with color
+          </span>
+        </div>
+      )}
 
       {/* 2D Shapes Row */}
       <div className="mb-2">
@@ -815,7 +974,7 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
 
       {/* Tips */}
       <div className="text-xs text-center text-muted-foreground mt-3 bg-white/50 dark:bg-gray-800/50 p-2 rounded-lg">
-        💡 <strong>Tips:</strong> Tap shapes to add • Use Grid for precise drawing • 3D shapes show dashed lines for hidden edges
+        💡 <strong>Tips:</strong> Use 📏 Ruler to measure • Enable Fill for colored shapes • Grid for precision • 3D shapes show dashed lines for hidden edges
       </div>
     </div>
   );
