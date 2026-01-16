@@ -9,18 +9,17 @@ import {
   MousePointer, 
   Eraser, 
   RotateCcw, 
-  Palette,
   Save,
   Triangle as TriangleIcon,
   Pentagon,
   Star,
   ArrowRight,
   Type,
-  Move,
   Undo2,
   Trash2,
-  ZoomIn,
-  ZoomOut
+  Grid3X3,
+  Box,
+  Cylinder
 } from "lucide-react";
 
 interface KidDrawingPadProps {
@@ -39,29 +38,40 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
   const [brushSize, setBrushSize] = useState(4);
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [showGrid, setShowGrid] = useState(false);
 
   // Kid-friendly vibrant colors
   const colors = [
-    { color: "#ef4444", emoji: "🔴" }, // Red
-    { color: "#f97316", emoji: "🟠" }, // Orange
-    { color: "#eab308", emoji: "🟡" }, // Yellow
-    { color: "#22c55e", emoji: "🟢" }, // Green
-    { color: "#3b82f6", emoji: "🔵" }, // Blue
-    { color: "#8b5cf6", emoji: "🟣" }, // Purple
-    { color: "#ec4899", emoji: "💗" }, // Pink
-    { color: "#000000", emoji: "⚫" }, // Black
+    { color: "#ef4444", emoji: "🔴" },
+    { color: "#f97316", emoji: "🟠" },
+    { color: "#eab308", emoji: "🟡" },
+    { color: "#22c55e", emoji: "🟢" },
+    { color: "#3b82f6", emoji: "🔵" },
+    { color: "#8b5cf6", emoji: "🟣" },
+    { color: "#ec4899", emoji: "💗" },
+    { color: "#000000", emoji: "⚫" },
   ];
 
-  // Pre-made shapes for kids - easy to add and edit
-  const shapes = [
-    { id: "rectangle", label: "📦 Box", icon: Square },
-    { id: "circle", label: "⚪ Circle", icon: CircleIcon },
-    { id: "triangle", label: "🔺 Triangle", icon: TriangleIcon },
-    { id: "line", label: "➖ Line", icon: Minus },
-    { id: "arrow", label: "➡️ Arrow", icon: ArrowRight },
-    { id: "star", label: "⭐ Star", icon: Star },
-    { id: "oval", label: "🥚 Oval", icon: CircleIcon },
-    { id: "pentagon", label: "⬠ Pentagon", icon: Pentagon },
+  // 2D shapes
+  const shapes2D = [
+    { id: "rectangle", label: "📦 Box" },
+    { id: "circle", label: "⚪ Circle" },
+    { id: "triangle", label: "🔺 Triangle" },
+    { id: "line", label: "➖ Line" },
+    { id: "arrow", label: "➡️ Arrow" },
+    { id: "star", label: "⭐ Star" },
+    { id: "oval", label: "🥚 Oval" },
+    { id: "pentagon", label: "⬠ Pentagon" },
+  ];
+
+  // 3D shapes for geometry
+  const shapes3D = [
+    { id: "cube", label: "🧊 Cube" },
+    { id: "cylinder", label: "🥫 Cylinder" },
+    { id: "pyramid", label: "🔺 Pyramid" },
+    { id: "cone", label: "🍦 Cone" },
+    { id: "sphere", label: "🔮 Sphere" },
+    { id: "prism", label: "📐 Prism" },
   ];
 
   // Tools for drawing
@@ -71,6 +81,51 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
     { id: "erase", label: "🧹 Eraser", icon: Eraser, description: "Erase mistakes" },
     { id: "text", label: "Aa Text", icon: Type, description: "Add words" },
   ];
+
+  // Draw grid on canvas
+  const drawGrid = (canvas: FabricCanvas, show: boolean) => {
+    // Remove existing grid lines
+    const objects = canvas.getObjects();
+    objects.forEach((obj) => {
+      if ((obj as any).isGridLine) {
+        canvas.remove(obj);
+      }
+    });
+
+    if (show) {
+      const gridSize = 25;
+      const canvasWidth = canvas.width || 500;
+      const canvasHeight = canvas.height || 350;
+
+      // Draw vertical lines
+      for (let x = gridSize; x < canvasWidth; x += gridSize) {
+        const line = new Line([x, 0, x, canvasHeight], {
+          stroke: '#e5e7eb',
+          strokeWidth: 1,
+          selectable: false,
+          evented: false,
+        });
+        (line as any).isGridLine = true;
+        canvas.add(line);
+        canvas.sendObjectToBack(line);
+      }
+
+      // Draw horizontal lines
+      for (let y = gridSize; y < canvasHeight; y += gridSize) {
+        const line = new Line([0, y, canvasWidth, y], {
+          stroke: '#e5e7eb',
+          strokeWidth: 1,
+          selectable: false,
+          evented: false,
+        });
+        (line as any).isGridLine = true;
+        canvas.add(line);
+        canvas.sendObjectToBack(line);
+      }
+    }
+
+    canvas.renderAll();
+  };
 
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
@@ -91,7 +146,6 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
       canvas.freeDrawingBrush.width = brushSize;
     }
 
-    // Save initial state
     const initialState = canvas.toJSON();
     setHistory([JSON.stringify(initialState)]);
     setHistoryIndex(0);
@@ -102,6 +156,11 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
       canvas.dispose();
     };
   }, [width, height]);
+
+  useEffect(() => {
+    if (!fabricCanvas) return;
+    drawGrid(fabricCanvas, showGrid);
+  }, [showGrid, fabricCanvas]);
 
   useEffect(() => {
     if (!fabricCanvas || !fabricCanvas.freeDrawingBrush) return;
@@ -134,7 +193,268 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
     fabricCanvas.loadFromJSON(JSON.parse(history[newIndex]), () => {
       fabricCanvas.renderAll();
       setHistoryIndex(newIndex);
+      if (showGrid) drawGrid(fabricCanvas, true);
     });
+  };
+
+  const add3DShape = (shapeId: string) => {
+    if (!fabricCanvas) return;
+
+    const centerX = (fabricCanvas.width || 300) / 2 - 50;
+    const centerY = (fabricCanvas.height || 200) / 2 - 50;
+    const color = activeColor;
+
+    switch (shapeId) {
+      case "cube":
+        // Draw a 3D cube (isometric view)
+        const cubeSize = 60;
+        const offset = 25;
+        
+        // Front face
+        const frontFace = new Rect({
+          left: centerX,
+          top: centerY + offset,
+          width: cubeSize,
+          height: cubeSize,
+          fill: "transparent",
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Top face (parallelogram)
+        const topFace = new Polygon([
+          { x: 0, y: offset },
+          { x: offset, y: 0 },
+          { x: cubeSize + offset, y: 0 },
+          { x: cubeSize, y: offset },
+        ], {
+          left: centerX,
+          top: centerY,
+          fill: "transparent",
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Right face (parallelogram)
+        const rightFace = new Polygon([
+          { x: 0, y: 0 },
+          { x: offset, y: -offset },
+          { x: offset, y: cubeSize - offset },
+          { x: 0, y: cubeSize },
+        ], {
+          left: centerX + cubeSize,
+          top: centerY + offset,
+          fill: "transparent",
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        fabricCanvas.add(frontFace, topFace, rightFace);
+        break;
+
+      case "cylinder":
+        // Draw a 3D cylinder
+        const cylWidth = 70;
+        const cylHeight = 80;
+        
+        // Top ellipse
+        const topEllipse = new Ellipse({
+          left: centerX,
+          top: centerY,
+          rx: cylWidth / 2,
+          ry: 15,
+          fill: "transparent",
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Left side line
+        const leftSide = new Line([centerX, centerY + 15, centerX, centerY + cylHeight], {
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Right side line
+        const rightSide = new Line([centerX + cylWidth, centerY + 15, centerX + cylWidth, centerY + cylHeight], {
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Bottom ellipse (half visible)
+        const bottomEllipse = new Ellipse({
+          left: centerX,
+          top: centerY + cylHeight - 15,
+          rx: cylWidth / 2,
+          ry: 15,
+          fill: "transparent",
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        fabricCanvas.add(bottomEllipse, leftSide, rightSide, topEllipse);
+        break;
+
+      case "pyramid":
+        // Draw a 3D pyramid
+        const pyrBase = 80;
+        const pyrHeight = 70;
+        
+        // Front triangle face
+        const frontTriangle = new Triangle({
+          left: centerX + 10,
+          top: centerY,
+          width: pyrBase - 20,
+          height: pyrHeight,
+          fill: "transparent",
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Base line
+        const baseLine = new Line([centerX, centerY + pyrHeight, centerX + pyrBase, centerY + pyrHeight], {
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Back edge to apex
+        const backEdge = new Line([centerX + pyrBase / 2, centerY, centerX + pyrBase + 15, centerY + pyrHeight - 10], {
+          stroke: color,
+          strokeWidth: 2,
+          strokeDashArray: [5, 5], // Dashed for hidden edge
+        });
+        
+        // Right base edge
+        const rightBaseEdge = new Line([centerX + pyrBase, centerY + pyrHeight, centerX + pyrBase + 15, centerY + pyrHeight - 10], {
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        fabricCanvas.add(frontTriangle, baseLine, backEdge, rightBaseEdge);
+        break;
+
+      case "cone":
+        // Draw a 3D cone
+        const coneWidth = 70;
+        const coneHeight = 80;
+        
+        // Left edge
+        const coneLeft = new Line([centerX + coneWidth / 2, centerY, centerX, centerY + coneHeight], {
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Right edge
+        const coneRight = new Line([centerX + coneWidth / 2, centerY, centerX + coneWidth, centerY + coneHeight], {
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Base ellipse
+        const coneBase = new Ellipse({
+          left: centerX,
+          top: centerY + coneHeight - 15,
+          rx: coneWidth / 2,
+          ry: 15,
+          fill: "transparent",
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        fabricCanvas.add(coneBase, coneLeft, coneRight);
+        break;
+
+      case "sphere":
+        // Draw a 3D sphere with cross-section lines
+        const sphereRadius = 40;
+        
+        const sphereOutline = new Circle({
+          left: centerX,
+          top: centerY,
+          radius: sphereRadius,
+          fill: "transparent",
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Horizontal cross-section (ellipse)
+        const hCross = new Ellipse({
+          left: centerX,
+          top: centerY + sphereRadius - 12,
+          rx: sphereRadius,
+          ry: 12,
+          fill: "transparent",
+          stroke: color,
+          strokeWidth: 2,
+          strokeDashArray: [3, 3],
+        });
+        
+        // Vertical cross-section (ellipse)
+        const vCross = new Ellipse({
+          left: centerX + sphereRadius - 12,
+          top: centerY,
+          rx: 12,
+          ry: sphereRadius,
+          fill: "transparent",
+          stroke: color,
+          strokeWidth: 2,
+          strokeDashArray: [3, 3],
+        });
+        
+        fabricCanvas.add(hCross, vCross, sphereOutline);
+        break;
+
+      case "prism":
+        // Draw a triangular prism
+        const prismWidth = 60;
+        const prismDepth = 30;
+        const prismHeight = 50;
+        
+        // Front triangle
+        const prismFront = new Triangle({
+          left: centerX,
+          top: centerY + prismDepth,
+          width: prismWidth,
+          height: prismHeight,
+          fill: "transparent",
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Top edge
+        const prismTopEdge = new Line([
+          centerX + prismWidth / 2, centerY + prismDepth,
+          centerX + prismWidth / 2 + prismDepth, centerY
+        ], {
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Right edge
+        const prismRightEdge = new Line([
+          centerX + prismWidth, centerY + prismDepth + prismHeight,
+          centerX + prismWidth + prismDepth, centerY + prismHeight
+        ], {
+          stroke: color,
+          strokeWidth: 3,
+        });
+        
+        // Back triangle top
+        const prismBackTop = new Line([
+          centerX + prismWidth / 2 + prismDepth, centerY,
+          centerX + prismWidth + prismDepth, centerY + prismHeight
+        ], {
+          stroke: color,
+          strokeWidth: 2,
+          strokeDashArray: [4, 4],
+        });
+        
+        fabricCanvas.add(prismFront, prismTopEdge, prismRightEdge, prismBackTop);
+        break;
+    }
+
+    fabricCanvas.renderAll();
+    saveToHistory();
+    setActiveTool("select");
   };
 
   const addShape = (shapeId: string) => {
@@ -189,7 +509,6 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
         });
         break;
       case "arrow":
-        // Create arrow as a group of lines
         const arrowLine = new Line([0, 20, 80, 20], {
           stroke: activeColor,
           strokeWidth: 3,
@@ -266,7 +585,7 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
       fabricCanvas.setActiveObject(shape);
       fabricCanvas.renderAll();
       saveToHistory();
-      setActiveTool("select"); // Switch to select so they can move it
+      setActiveTool("select");
     }
   };
 
@@ -290,6 +609,7 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
     if (!fabricCanvas) return;
     fabricCanvas.clear();
     fabricCanvas.backgroundColor = "#ffffff";
+    if (showGrid) drawGrid(fabricCanvas, true);
     fabricCanvas.renderAll();
     saveToHistory();
   };
@@ -308,7 +628,11 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
     if (!fabricCanvas) return;
     const activeObjects = fabricCanvas.getActiveObjects();
     if (activeObjects.length) {
-      activeObjects.forEach((obj) => fabricCanvas.remove(obj));
+      activeObjects.forEach((obj) => {
+        if (!(obj as any).isGridLine) {
+          fabricCanvas.remove(obj);
+        }
+      });
       fabricCanvas.discardActiveObject();
       fabricCanvas.renderAll();
       saveToHistory();
@@ -347,6 +671,18 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
           </Button>
         ))}
         
+        {/* Grid Toggle */}
+        <Button
+          variant={showGrid ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowGrid(!showGrid)}
+          className={`text-xs gap-1 ${showGrid ? 'ring-2 ring-green-500 bg-green-600 hover:bg-green-700' : ''}`}
+          title="Show/Hide Grid"
+        >
+          <Grid3X3 className="w-4 h-4" />
+          <span className="hidden sm:inline">Grid</span>
+        </Button>
+        
         {/* Brush Size */}
         <div className="flex items-center gap-1 bg-white dark:bg-gray-800 rounded-lg px-2 py-1 border">
           <span className="text-xs">Size:</span>
@@ -361,17 +697,35 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
         </div>
       </div>
 
-      {/* Shapes Row */}
-      <div className="mb-3">
-        <p className="text-xs text-center mb-2 font-medium">📐 Tap to add a shape:</p>
-        <div className="flex flex-wrap gap-2 justify-center">
-          {shapes.map((shape) => (
+      {/* 2D Shapes Row */}
+      <div className="mb-2">
+        <p className="text-xs text-center mb-2 font-medium">📐 2D Shapes:</p>
+        <div className="flex flex-wrap gap-1.5 justify-center">
+          {shapes2D.map((shape) => (
             <Button
               key={shape.id}
               variant="outline"
               size="sm"
               onClick={() => addShape(shape.id)}
-              className="text-xs bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900"
+              className="text-xs bg-white dark:bg-gray-800 hover:bg-blue-50 dark:hover:bg-blue-900 h-8 px-2"
+            >
+              {shape.label}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* 3D Shapes Row */}
+      <div className="mb-3">
+        <p className="text-xs text-center mb-2 font-medium">🧊 3D Shapes (Geometry):</p>
+        <div className="flex flex-wrap gap-1.5 justify-center">
+          {shapes3D.map((shape) => (
+            <Button
+              key={shape.id}
+              variant="outline"
+              size="sm"
+              onClick={() => add3DShape(shape.id)}
+              className="text-xs bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900 dark:to-purple-900 hover:from-blue-100 hover:to-purple-100 border-blue-300 h-8 px-2"
             >
               {shape.label}
             </Button>
@@ -400,11 +754,22 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
       {/* Canvas */}
       <div 
         ref={containerRef}
-        className="border-4 border-dashed border-blue-300 dark:border-blue-700 rounded-xl overflow-hidden bg-white mx-auto"
+        className={`border-4 rounded-xl overflow-hidden bg-white mx-auto ${
+          showGrid ? 'border-green-400 dark:border-green-600' : 'border-dashed border-blue-300 dark:border-blue-700'
+        }`}
         style={{ maxWidth: '100%' }}
       >
         <canvas ref={canvasRef} className="max-w-full" />
       </div>
+
+      {/* Grid indicator */}
+      {showGrid && (
+        <div className="text-center mt-2">
+          <span className="text-xs bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-1 rounded-full">
+            📏 Grid ON - Each square = 25px
+          </span>
+        </div>
+      )}
 
       {/* Action Buttons */}
       <div className="flex flex-wrap gap-2 mt-3 justify-center">
@@ -450,7 +815,7 @@ export const KidDrawingPad = ({ onSave, height = 350, width, subject }: KidDrawi
 
       {/* Tips */}
       <div className="text-xs text-center text-muted-foreground mt-3 bg-white/50 dark:bg-gray-800/50 p-2 rounded-lg">
-        💡 <strong>Tips:</strong> Tap a shape to add it • Use "Select" to move things • Pick colors before adding shapes
+        💡 <strong>Tips:</strong> Tap shapes to add • Use Grid for precise drawing • 3D shapes show dashed lines for hidden edges
       </div>
     </div>
   );
