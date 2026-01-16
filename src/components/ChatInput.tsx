@@ -10,9 +10,10 @@ interface ChatInputProps {
   isLoading: boolean;
   disabled?: boolean;
   placeholder?: string;
+  subjectId?: string; // math, science, english, social - only show calculator for math
 }
 
-export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "Ask me anything..." }: ChatInputProps) => {
+export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "Ask me anything...", subjectId = 'math' }: ChatInputProps) => {
   const [message, setMessage] = useState("");
   const [showQuestions, setShowQuestions] = useState(false);
   const [showMathBuilder, setShowMathBuilder] = useState(false);
@@ -80,7 +81,8 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
 
   return (
     <div className="space-y-2">
-      {showMathBuilder && (
+      {/* Only show math builder for math subject */}
+      {showMathBuilder && subjectId === 'math' && (
         <Card className="p-4 border-border bg-card">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-sm font-semibold flex items-center gap-2">
@@ -116,17 +118,20 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
             disabled={isLoading || disabled}
           />
           <div className="absolute right-2 top-2 flex gap-1">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={toggleMathBuilder}
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
-              disabled={isLoading || disabled}
-              title="Math Expression Builder"
-            >
-              <Calculator className="w-4 h-4" />
-            </Button>
+            {/* Only show calculator button for math subject */}
+            {subjectId === 'math' && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={toggleMathBuilder}
+                className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                disabled={isLoading || disabled}
+                title="Math Expression Builder"
+              >
+                <Calculator className="w-4 h-4" />
+              </Button>
+            )}
             <Button
               type="button"
               variant="ghost"
