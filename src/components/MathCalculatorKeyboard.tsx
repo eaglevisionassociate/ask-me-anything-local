@@ -200,13 +200,13 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
         <div 
           key={el.id} 
           className={`inline-flex flex-col items-center mx-1 px-2 py-1 rounded-lg transition-all ${
-            isBeforeCursor ? 'bg-green-100 dark:bg-green-900/30' : ''
+            isBeforeCursor ? 'bg-primary/20' : ''
           }`}
         >
-          <span className="text-xl md:text-2xl font-bold border-b-2 border-foreground px-2 min-w-[24px] text-center">
+          <span className="text-xl md:text-2xl font-bold border-b-2 border-foreground px-2 min-w-[24px] text-center text-foreground">
             {el.numerator}
           </span>
-          <span className="text-xl md:text-2xl font-bold px-2 min-w-[24px] text-center">
+          <span className="text-xl md:text-2xl font-bold px-2 min-w-[24px] text-center text-foreground">
             {el.denominator}
           </span>
         </div>
@@ -217,8 +217,8 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
       return (
         <span 
           key={el.id} 
-          className={`text-2xl md:text-3xl font-bold mx-1 text-purple-600 dark:text-purple-400 ${
-            isBeforeCursor ? 'bg-green-100 dark:bg-green-900/30 px-1 rounded' : ''
+          className={`text-2xl md:text-3xl font-bold mx-1 text-primary ${
+            isBeforeCursor ? 'bg-primary/20 px-1 rounded' : ''
           }`}
         >
           {el.value}
@@ -229,8 +229,8 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
     return (
       <span 
         key={el.id} 
-        className={`text-2xl md:text-3xl font-bold ${
-          isBeforeCursor ? 'bg-green-100 dark:bg-green-900/30 px-1 rounded' : ''
+        className={`text-2xl md:text-3xl font-bold text-foreground ${
+          isBeforeCursor ? 'bg-primary/20 px-1 rounded' : ''
         }`}
       >
         {el.value}
@@ -244,10 +244,10 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
   );
 
   return (
-    <div className="space-y-4 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-900 p-5 rounded-2xl border-2 border-primary/20 shadow-lg">
+    <div className="space-y-4 bg-card p-5 rounded-2xl border-2 border-primary/20 shadow-lg">
       
       {/* Math Expression Display - Shows visual fractions */}
-      <div className="bg-white dark:bg-slate-800 rounded-xl p-4 min-h-[100px] border-2 border-primary/30 shadow-inner">
+      <div className="bg-secondary rounded-xl p-4 min-h-[100px] border-2 border-primary/30 shadow-inner">
         {showFractionBuilder ? (
           <div className="flex flex-col items-center gap-3">
             <p className="text-sm font-medium text-primary flex items-center gap-2">
@@ -262,12 +262,12 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
               )}
               
               {/* Fraction being built */}
-              <div className="flex flex-col items-center bg-teal-50 dark:bg-teal-900/30 px-6 py-3 rounded-xl border-2 border-teal-400">
+              <div className="flex flex-col items-center bg-accent/20 px-6 py-3 rounded-xl border-2 border-accent">
                 <div 
                   className={`min-w-[80px] text-center text-2xl font-bold border-b-4 border-foreground pb-2 mb-2 px-2 rounded cursor-pointer transition-all ${
                     activeField === 'numerator' 
-                      ? 'bg-green-200 dark:bg-green-800 ring-2 ring-green-500' 
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-primary/30 ring-2 ring-primary' 
+                      : 'hover:bg-muted'
                   }`}
                   onClick={() => setActiveField('numerator')}
                 >
@@ -276,8 +276,8 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
                 <div 
                   className={`min-w-[80px] text-center text-2xl font-bold pt-1 px-2 rounded cursor-pointer transition-all ${
                     activeField === 'denominator' 
-                      ? 'bg-green-200 dark:bg-green-800 ring-2 ring-green-500' 
-                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                      ? 'bg-primary/30 ring-2 ring-primary' 
+                      : 'hover:bg-muted'
                   }`}
                   onClick={() => setActiveField('denominator')}
                 >
@@ -326,12 +326,12 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
               moveCursorLeft();
             }}
             disabled={disabled || cursorPosition === 0}
-            className="h-12 px-6 text-lg font-bold bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-800/40 border-2 border-blue-300 text-blue-700 dark:text-blue-300 rounded-xl disabled:opacity-40"
+            className="h-12 px-6 text-lg font-bold bg-primary/20 hover:bg-primary/30 border-2 border-primary/40 text-foreground rounded-xl disabled:opacity-40"
           >
             <ArrowLeft className="w-5 h-5 mr-1" />
             Move Left
           </Button>
-          <div className="flex items-center px-3 bg-gray-100 dark:bg-gray-700 rounded-xl text-sm font-medium">
+          <div className="flex items-center px-3 bg-muted rounded-xl text-sm font-medium text-foreground">
             Position: {cursorPosition} / {elements.length}
           </div>
           <Button
@@ -342,7 +342,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
               moveCursorRight();
             }}
             disabled={disabled || cursorPosition === elements.length}
-            className="h-12 px-6 text-lg font-bold bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-800/40 border-2 border-blue-300 text-blue-700 dark:text-blue-300 rounded-xl disabled:opacity-40"
+            className="h-12 px-6 text-lg font-bold bg-primary/20 hover:bg-primary/30 border-2 border-primary/40 text-foreground rounded-xl disabled:opacity-40"
           >
             Move Right
             <ArrowRight className="w-5 h-5 ml-1" />
@@ -360,7 +360,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
             handleBackspace();
           }}
           disabled={disabled}
-          className="flex-1 h-14 text-lg font-bold bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-800/40 border-2 border-orange-300 text-orange-700 dark:text-orange-300 rounded-xl"
+          className="flex-1 h-14 text-lg font-bold bg-accent/20 hover:bg-accent/30 border-2 border-accent/40 text-foreground rounded-xl"
         >
           <ArrowLeft className="w-6 h-6 mr-2" />
           Undo Last
@@ -373,7 +373,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
             handleClearAll();
           }}
           disabled={disabled}
-          className="flex-1 h-14 text-lg font-bold bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/40 border-2 border-red-300 text-red-700 dark:text-red-300 rounded-xl"
+          className="flex-1 h-14 text-lg font-bold bg-destructive/20 hover:bg-destructive/30 border-2 border-destructive/40 text-foreground rounded-xl"
         >
           <Trash2 className="w-6 h-6 mr-2" />
           Start Over
@@ -400,10 +400,10 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
                 }
               }}
               disabled={disabled || (showFractionBuilder && isOperator)}
-              className={`h-16 text-2xl font-bold rounded-xl transition-transform active:scale-95 ${
+              className={`h-16 text-2xl font-bold rounded-xl transition-transform active:scale-95 text-foreground ${
                 isOperator 
-                  ? 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/40 dark:hover:bg-purple-800/50 border-2 border-purple-300 text-purple-700 dark:text-purple-300' 
-                  : 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-800/50 border-2 border-blue-300 text-blue-700 dark:text-blue-300'
+                  ? 'bg-primary/30 hover:bg-primary/40 border-2 border-primary/50' 
+                  : 'bg-secondary hover:bg-secondary/80 border-2 border-border'
               } ${showFractionBuilder && isOperator ? 'opacity-40' : ''}`}
             >
               {key}
@@ -423,7 +423,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
               setActiveField(prev => prev === 'numerator' ? 'denominator' : 'numerator');
             }}
             disabled={disabled}
-            className="flex-1 h-14 text-base font-bold bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-800/40 border-2 border-yellow-400 text-yellow-700 dark:text-yellow-300 rounded-xl"
+            className="flex-1 h-14 text-base font-bold bg-accent/30 hover:bg-accent/40 border-2 border-accent/50 text-foreground rounded-xl"
           >
             {activeField === 'numerator' ? (
               <>
@@ -446,7 +446,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
               insertFraction();
             }}
             disabled={disabled || !numerator || !denominator}
-            className="flex-1 h-14 text-base font-bold bg-green-500 hover:bg-green-600 text-white rounded-xl"
+            className="flex-1 h-14 text-base font-bold bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl"
           >
             <Check className="w-5 h-5 mr-2" />
             Add Fraction ✓
@@ -463,7 +463,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
               setActiveField('numerator');
             }}
             disabled={disabled}
-            className="h-14 px-4 text-base font-bold bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border-2 border-gray-300 rounded-xl"
+            className="h-14 px-4 text-base font-bold bg-muted hover:bg-muted/80 border-2 border-border text-foreground rounded-xl"
           >
             <X className="w-5 h-5" />
           </Button>
@@ -481,7 +481,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
               setActiveField('numerator');
             }}
             disabled={disabled}
-            className="flex-1 h-14 text-lg font-bold bg-teal-100 hover:bg-teal-200 dark:bg-teal-900/30 dark:hover:bg-teal-800/40 border-2 border-teal-400 text-teal-700 dark:text-teal-300 rounded-xl"
+            className="flex-1 h-14 text-lg font-bold bg-accent/20 hover:bg-accent/30 border-2 border-accent/40 text-foreground rounded-xl"
           >
             <div className="flex items-center gap-3">
               <Plus className="w-5 h-5" />
@@ -501,7 +501,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
               insertElement('operator', '(');
             }}
             disabled={disabled}
-            className="h-14 w-14 text-xl font-bold bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border-2 border-gray-300 rounded-xl"
+            className="h-14 w-14 text-xl font-bold bg-muted hover:bg-muted/80 border-2 border-border text-foreground rounded-xl"
           >
             (
           </Button>
@@ -513,7 +513,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
               insertElement('operator', ')');
             }}
             disabled={disabled}
-            className="h-14 w-14 text-xl font-bold bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border-2 border-gray-300 rounded-xl"
+            className="h-14 w-14 text-xl font-bold bg-muted hover:bg-muted/80 border-2 border-border text-foreground rounded-xl"
           >
             )
           </Button>
@@ -522,8 +522,8 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
 
       {/* Quick Fraction Shortcuts */}
       {!showFractionBuilder && (
-        <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-3 border border-primary/10">
-          <p className="text-sm font-medium text-muted-foreground mb-2">⚡ Quick fractions:</p>
+        <div className="bg-secondary rounded-xl p-3 border border-primary/20">
+          <p className="text-sm font-medium text-foreground mb-2">⚡ Quick fractions:</p>
           <div className="flex gap-2 flex-wrap justify-center">
             {[
               { num: '1', den: '2' },
@@ -541,7 +541,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
                   insertQuickFraction(frac.num, frac.den);
                 }}
                 disabled={disabled}
-                className="h-14 px-4 bg-white hover:bg-primary/10 dark:bg-slate-700 dark:hover:bg-slate-600 border-2 border-primary/20 rounded-xl transition-transform active:scale-95"
+                className="h-14 px-4 bg-card hover:bg-primary/20 border-2 border-primary/30 text-foreground rounded-xl transition-transform active:scale-95"
               >
                 <div className="flex flex-col items-center">
                   <span className="text-lg font-bold border-b-2 border-current px-2">{frac.num}</span>
@@ -573,7 +573,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
                 insertElement('operator', sym.symbol);
               }}
               disabled={disabled}
-              className="h-12 text-lg font-medium bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-800/40 border border-indigo-200 dark:border-indigo-700 rounded-xl transition-transform active:scale-95"
+              className="h-12 text-lg font-medium bg-accent/20 hover:bg-accent/30 border border-accent/40 text-foreground rounded-xl transition-transform active:scale-95"
             >
               {sym.label}
             </Button>
@@ -590,7 +590,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
           onSubmit?.();
         }}
         disabled={disabled || elements.length === 0}
-        className="w-full h-16 text-xl font-bold bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white rounded-xl shadow-lg transition-transform active:scale-98"
+        className="w-full h-16 text-xl font-bold bg-primary hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground text-primary-foreground rounded-xl shadow-lg transition-transform active:scale-98"
       >
         <Check className="w-6 h-6 mr-2" />
         Submit My Answer 🎯
