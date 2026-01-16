@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Delete, CornerDownLeft, Plus, Minus, X, Divide, Equal, ChevronUp, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Trash2, Check, ArrowUp, ArrowDown } from 'lucide-react';
 import { Fraction } from '@/components/ui/fraction';
 
 interface MathCalculatorKeyboardProps {
@@ -21,7 +21,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
   const [denominator, setDenominator] = useState('');
   const [activeField, setActiveField] = useState<'numerator' | 'denominator'>('numerator');
 
-  // Insert character at cursor position
+  // Insert character
   const insertChar = (char: string) => {
     if (disabled) return;
     
@@ -36,8 +36,8 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
     }
   };
 
-  // Delete last character
-  const handleDelete = () => {
+  // Delete last character (backspace)
+  const handleBackspace = () => {
     if (disabled) return;
     
     if (showFractionBuilder) {
@@ -52,7 +52,7 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
   };
 
   // Clear all
-  const handleClear = () => {
+  const handleClearAll = () => {
     if (disabled) return;
     
     if (showFractionBuilder) {
@@ -75,264 +75,304 @@ export const MathCalculatorKeyboard: React.FC<MathCalculatorKeyboardProps> = ({
     }
   };
 
-  // Toggle between numerator and denominator input
-  const toggleFractionField = () => {
-    setActiveField(prev => prev === 'numerator' ? 'denominator' : 'numerator');
+  // Cancel fraction builder
+  const cancelFraction = () => {
+    setShowFractionBuilder(false);
+    setNumerator('');
+    setDenominator('');
+    setActiveField('numerator');
   };
 
-  // Number keys
-  const numberKeys = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '0', '.', '('];
-  
-  // Operator keys
-  const operatorKeys = [
-    { symbol: '+', display: <Plus className="w-4 h-4" /> },
-    { symbol: '-', display: <Minus className="w-4 h-4" /> },
-    { symbol: '×', display: <X className="w-4 h-4" /> },
-    { symbol: '÷', display: <Divide className="w-4 h-4" /> },
-  ];
-
-  // Additional math symbols
-  const mathSymbols = [
-    { symbol: '=', display: '=' },
-    { symbol: ')', display: ')' },
-    { symbol: '<', display: '<' },
-    { symbol: '>', display: '>' },
-    { symbol: '√', display: '√' },
-    { symbol: 'π', display: 'π' },
-    { symbol: '²', display: 'x²' },
-    { symbol: '³', display: 'x³' },
-  ];
-
   return (
-    <div className="space-y-3 bg-card p-4 rounded-xl border border-border">
-      {/* Display Area */}
-      <div className="bg-background rounded-lg p-3 min-h-[60px] border border-border">
+    <div className="space-y-4 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-slate-800 dark:to-slate-900 p-5 rounded-2xl border-2 border-primary/20 shadow-lg">
+      {/* Answer Display - Big and Clear */}
+      <div className="bg-white dark:bg-slate-800 rounded-xl p-4 min-h-[80px] border-2 border-primary/30 shadow-inner">
         {showFractionBuilder ? (
-          <div className="flex items-center justify-center gap-4">
-            <div 
-              className={`flex flex-col items-center cursor-pointer p-2 rounded ${activeField === 'numerator' ? 'bg-primary/20 ring-2 ring-primary' : ''}`}
-              onClick={() => setActiveField('numerator')}
-            >
-              <div className="min-w-[80px] text-center border-b-2 border-foreground pb-1 mb-1 font-mono text-lg">
-                {numerator || <span className="text-muted-foreground">top</span>}
+          <div className="flex flex-col items-center gap-3">
+            <p className="text-sm font-medium text-primary">
+              {activeField === 'numerator' ? '👆 Type the TOP number' : '👇 Type the BOTTOM number'}
+            </p>
+            <div className="flex items-center justify-center">
+              <div 
+                className={`flex flex-col items-center cursor-pointer px-6 py-2 rounded-xl transition-all ${
+                  activeField === 'numerator' 
+                    ? 'bg-green-100 dark:bg-green-900/30 ring-3 ring-green-500 scale-105' 
+                    : 'bg-gray-100 dark:bg-gray-700'
+                }`}
+                onClick={() => setActiveField('numerator')}
+              >
+                <div className="min-w-[100px] text-center text-2xl font-bold border-b-4 border-foreground pb-2 mb-2">
+                  {numerator || <span className="text-muted-foreground text-lg">?</span>}
+                </div>
+                <div 
+                  className={`min-w-[100px] text-center text-2xl font-bold pt-1 rounded-lg px-2 ${
+                    activeField === 'denominator' 
+                      ? 'bg-green-100 dark:bg-green-900/30 ring-2 ring-green-500' 
+                      : ''
+                  }`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveField('denominator');
+                  }}
+                >
+                  {denominator || <span className="text-muted-foreground text-lg">?</span>}
+                </div>
               </div>
-              <div className="min-w-[80px] text-center pt-1 font-mono text-lg">
-                {denominator || <span className="text-muted-foreground">bottom</span>}
-              </div>
-            </div>
-            <div 
-              className={`flex flex-col items-center cursor-pointer p-2 rounded ${activeField === 'denominator' ? 'bg-primary/20 ring-2 ring-primary' : ''}`}
-              onClick={() => setActiveField('denominator')}
-            >
             </div>
           </div>
         ) : (
-          <div className="font-mono text-xl break-all">
-            {value || <span className="text-muted-foreground">Type your answer...</span>}
+          <div className="flex items-center justify-between">
+            <div className="font-mono text-2xl md:text-3xl break-all flex-1">
+              {value || <span className="text-muted-foreground">Your answer goes here... 📝</span>}
+            </div>
+            {value && (
+              <span className="text-2xl ml-2">✏️</span>
+            )}
           </div>
         )}
       </div>
 
-      {/* Fraction Builder Mode Indicator */}
-      {showFractionBuilder && (
-        <div className="text-center text-sm text-primary font-medium">
-          Building fraction: Type the {activeField}
-        </div>
-      )}
+      {/* Correction Buttons - Always Visible and Prominent */}
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleBackspace();
+          }}
+          disabled={disabled}
+          className="flex-1 h-14 text-lg font-bold bg-orange-100 hover:bg-orange-200 dark:bg-orange-900/30 dark:hover:bg-orange-800/40 border-2 border-orange-300 text-orange-700 dark:text-orange-300 rounded-xl"
+        >
+          <ArrowLeft className="w-6 h-6 mr-2" />
+          Undo Last
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleClearAll();
+          }}
+          disabled={disabled}
+          className="flex-1 h-14 text-lg font-bold bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-800/40 border-2 border-red-300 text-red-700 dark:text-red-300 rounded-xl"
+        >
+          <Trash2 className="w-6 h-6 mr-2" />
+          Start Over
+        </Button>
+      </div>
 
-      {/* Calculator Keypad */}
-      <div className="grid grid-cols-5 gap-2">
-        {/* Numbers Column */}
-        <div className="col-span-3 grid grid-cols-3 gap-1.5">
-          {numberKeys.map((key) => (
+      {/* Main Number Pad - Large Kid-Friendly Buttons */}
+      <div className="grid grid-cols-4 gap-2">
+        {['7', '8', '9', '+', '4', '5', '6', '-', '1', '2', '3', '×', '0', '.', '=', '÷'].map((key) => {
+          const isOperator = ['+', '-', '×', '÷', '='].includes(key);
+          return (
             <Button
               key={key}
               type="button"
               variant="outline"
-              size="lg"
               onClick={(e) => {
                 e.stopPropagation();
-                insertChar(key);
+                if (isOperator && key !== '=') {
+                  insertChar(` ${key} `);
+                } else {
+                  insertChar(key);
+                }
               }}
               disabled={disabled}
-              className="h-12 text-lg font-semibold bg-secondary hover:bg-secondary/80"
+              className={`h-16 text-2xl font-bold rounded-xl transition-transform active:scale-95 ${
+                isOperator 
+                  ? 'bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/40 dark:hover:bg-purple-800/50 border-2 border-purple-300 text-purple-700 dark:text-purple-300' 
+                  : 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-800/50 border-2 border-blue-300 text-blue-700 dark:text-blue-300'
+              }`}
             >
               {key}
             </Button>
-          ))}
-        </div>
+          );
+        })}
+      </div>
 
-        {/* Operators Column */}
-        <div className="col-span-2 grid grid-cols-2 gap-1.5">
-          {operatorKeys.map((op) => (
-            <Button
-              key={op.symbol}
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={(e) => {
-                e.stopPropagation();
-                insertChar(` ${op.symbol} `);
-              }}
-              disabled={disabled}
-              className="h-12 bg-accent/20 hover:bg-accent/30 text-accent-foreground"
-            >
-              {op.display}
-            </Button>
-          ))}
+      {/* Fraction Section */}
+      {showFractionBuilder ? (
+        <div className="flex gap-2">
+          {/* Switch Top/Bottom */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              setActiveField(prev => prev === 'numerator' ? 'denominator' : 'numerator');
+            }}
+            disabled={disabled}
+            className="flex-1 h-14 text-base font-bold bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/30 dark:hover:bg-yellow-800/40 border-2 border-yellow-400 text-yellow-700 dark:text-yellow-300 rounded-xl"
+          >
+            {activeField === 'numerator' ? (
+              <>
+                <ArrowDown className="w-5 h-5 mr-2" />
+                Go to Bottom
+              </>
+            ) : (
+              <>
+                <ArrowUp className="w-5 h-5 mr-2" />
+                Go to Top
+              </>
+            )}
+          </Button>
           
+          {/* Insert Fraction */}
+          <Button
+            type="button"
+            variant="default"
+            onClick={(e) => {
+              e.stopPropagation();
+              insertFraction();
+            }}
+            disabled={disabled || !numerator || !denominator}
+            className="flex-1 h-14 text-base font-bold bg-green-500 hover:bg-green-600 text-white rounded-xl"
+          >
+            <Check className="w-5 h-5 mr-2" />
+            Done with Fraction ✓
+          </Button>
+          
+          {/* Cancel */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              cancelFraction();
+            }}
+            disabled={disabled}
+            className="h-14 px-4 text-base font-bold bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border-2 border-gray-300 rounded-xl"
+          >
+            ✕
+          </Button>
+        </div>
+      ) : (
+        <div className="flex gap-2">
           {/* Fraction Button */}
           <Button
             type="button"
-            variant={showFractionBuilder ? "default" : "outline"}
-            size="lg"
+            variant="outline"
             onClick={(e) => {
               e.stopPropagation();
-              setShowFractionBuilder(!showFractionBuilder);
-              if (!showFractionBuilder) {
-                setNumerator('');
-                setDenominator('');
-                setActiveField('numerator');
-              }
+              setShowFractionBuilder(true);
+              setNumerator('');
+              setDenominator('');
+              setActiveField('numerator');
             }}
             disabled={disabled}
-            className={`h-12 ${showFractionBuilder ? 'bg-primary' : 'bg-primary/20 hover:bg-primary/30'}`}
+            className="flex-1 h-14 text-lg font-bold bg-teal-100 hover:bg-teal-200 dark:bg-teal-900/30 dark:hover:bg-teal-800/40 border-2 border-teal-400 text-teal-700 dark:text-teal-300 rounded-xl"
           >
-            <div className="flex flex-col items-center text-xs leading-tight">
-              <span className="border-b border-current px-1">a</span>
-              <span className="px-1">b</span>
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col items-center text-sm leading-tight">
+                <span className="border-b-2 border-current px-2">a</span>
+                <span className="px-2">b</span>
+              </div>
+              <span>Fraction</span>
             </div>
           </Button>
-
-          {/* Up/Down Arrow for Fraction */}
-          {showFractionBuilder ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={(e) => {
-                e.stopPropagation();
-                toggleFractionField();
-              }}
-              disabled={disabled}
-              className="h-12 bg-secondary"
-            >
-              <div className="flex flex-col">
-                <ChevronUp className={`w-3 h-3 ${activeField === 'numerator' ? 'text-primary' : ''}`} />
-                <ChevronDown className={`w-3 h-3 ${activeField === 'denominator' ? 'text-primary' : ''}`} />
-              </div>
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="outline"
-              size="lg"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete();
-              }}
-              disabled={disabled}
-              className="h-12 bg-destructive/20 hover:bg-destructive/30"
-            >
-              <Delete className="w-4 h-4" />
-            </Button>
-          )}
-
-          {/* Insert Fraction or Delete */}
-          {showFractionBuilder ? (
-            <Button
-              type="button"
-              variant="default"
-              size="lg"
-              onClick={(e) => {
-                e.stopPropagation();
-                insertFraction();
-              }}
-              disabled={disabled || !numerator || !denominator}
-              className="h-12 col-span-2 bg-primary hover:bg-primary/80"
-            >
-              Insert Fraction
-            </Button>
-          ) : (
-            <>
-              {/* Delete */}
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleClear();
-                }}
-                disabled={disabled}
-                className="h-12 bg-destructive/20 hover:bg-destructive/30"
-              >
-                C
-              </Button>
-              {/* Enter/Submit */}
-              <Button
-                type="button"
-                variant="default"
-                size="lg"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onSubmit?.();
-                }}
-                disabled={disabled || !value.trim()}
-                className="h-12 bg-primary hover:bg-primary/80"
-              >
-                <CornerDownLeft className="w-4 h-4" />
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Additional Math Symbols Row */}
-      <div className="grid grid-cols-8 gap-1.5">
-        {mathSymbols.map((sym) => (
+          
+          {/* More Symbols */}
           <Button
-            key={sym.symbol}
             type="button"
             variant="outline"
-            size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              insertChar(sym.symbol);
+              insertChar('(');
             }}
             disabled={disabled}
-            className="h-10 text-sm bg-muted hover:bg-muted/80"
+            className="h-14 w-14 text-xl font-bold bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border-2 border-gray-300 rounded-xl"
           >
-            {sym.display}
+            (
           </Button>
-        ))}
-      </div>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              insertChar(')');
+            }}
+            disabled={disabled}
+            className="h-14 w-14 text-xl font-bold bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 border-2 border-gray-300 rounded-xl"
+          >
+            )
+          </Button>
+        </div>
+      )}
 
-      {/* Quick Fraction Shortcuts */}
-      <div className="flex items-center gap-2 pt-2 border-t border-border">
-        <span className="text-xs text-muted-foreground">Quick fractions:</span>
-        <div className="flex gap-1 flex-wrap">
-          {['(1)/(2)', '(1)/(3)', '(1)/(4)', '(2)/(3)', '(3)/(4)'].map((frac) => (
+      {/* Quick Fraction Shortcuts - Visual Fractions */}
+      {!showFractionBuilder && (
+        <div className="bg-white/50 dark:bg-slate-800/50 rounded-xl p-3 border border-primary/10">
+          <p className="text-sm font-medium text-muted-foreground mb-2">⚡ Tap to add quick fractions:</p>
+          <div className="flex gap-2 flex-wrap justify-center">
+            {[
+              { num: '1', den: '2', label: '½' },
+              { num: '1', den: '3', label: '⅓' },
+              { num: '1', den: '4', label: '¼' },
+              { num: '2', den: '3', label: '⅔' },
+              { num: '3', den: '4', label: '¾' },
+            ].map((frac) => (
+              <Button
+                key={`${frac.num}/${frac.den}`}
+                type="button"
+                variant="outline"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(value + `(${frac.num})/(${frac.den})`);
+                }}
+                disabled={disabled}
+                className="h-12 px-4 bg-white hover:bg-primary/10 dark:bg-slate-700 dark:hover:bg-slate-600 border-2 border-primary/20 rounded-xl transition-transform active:scale-95"
+              >
+                <Fraction numerator={frac.num} denominator={frac.den} />
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Extra Math Symbols */}
+      {!showFractionBuilder && (
+        <div className="grid grid-cols-6 gap-2">
+          {[
+            { symbol: '<', label: '<' },
+            { symbol: '>', label: '>' },
+            { symbol: '√', label: '√' },
+            { symbol: 'π', label: 'π' },
+            { symbol: '²', label: 'x²' },
+            { symbol: '³', label: 'x³' },
+          ].map((sym) => (
             <Button
-              key={frac}
+              key={sym.symbol}
               type="button"
-              variant="ghost"
-              size="sm"
+              variant="outline"
               onClick={(e) => {
                 e.stopPropagation();
-                onChange(value + frac);
+                insertChar(sym.symbol);
               }}
               disabled={disabled}
-              className="h-8 px-2 text-xs"
+              className="h-12 text-lg font-medium bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:hover:bg-indigo-800/40 border border-indigo-200 dark:border-indigo-700 rounded-xl transition-transform active:scale-95"
             >
-              <Fraction 
-                numerator={frac.match(/\((\d+)\)/)?.[1] || ''} 
-                denominator={frac.match(/\/\((\d+)\)/)?.[1] || ''} 
-              />
+              {sym.label}
             </Button>
           ))}
         </div>
-      </div>
+      )}
+
+      {/* Submit Button - Big and Green */}
+      <Button
+        type="button"
+        variant="default"
+        onClick={(e) => {
+          e.stopPropagation();
+          onSubmit?.();
+        }}
+        disabled={disabled || !value.trim()}
+        className="w-full h-16 text-xl font-bold bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white rounded-xl shadow-lg transition-transform active:scale-98"
+      >
+        <Check className="w-6 h-6 mr-2" />
+        Submit My Answer 🎯
+      </Button>
     </div>
   );
 };
