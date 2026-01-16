@@ -1,16 +1,16 @@
-import { useState, useEffect, useCallback } from 'react';
+import * as React from 'react';
 
 const REFRESH_INTERVAL_MS = 1.5 * 60 * 60 * 1000; // 1.5 hours in milliseconds
 const SESSION_START_KEY = 'app_session_start';
 const LAST_REFRESH_KEY = 'last_questions_refresh';
 
 export const useAutoRefresh = () => {
-  const [shouldRefresh, setShouldRefresh] = useState(false);
-  const [timeUntilRefresh, setTimeUntilRefresh] = useState<number>(REFRESH_INTERVAL_MS);
-  const [refreshCount, setRefreshCount] = useState(0);
+  const [shouldRefresh, setShouldRefresh] = React.useState(false);
+  const [timeUntilRefresh, setTimeUntilRefresh] = React.useState<number>(REFRESH_INTERVAL_MS);
+  const [refreshCount, setRefreshCount] = React.useState(0);
 
   // Initialize session start time
-  useEffect(() => {
+  React.useEffect(() => {
     const existingSessionStart = sessionStorage.getItem(SESSION_START_KEY);
     
     if (!existingSessionStart) {
@@ -22,7 +22,7 @@ export const useAutoRefresh = () => {
   }, []);
 
   // Check if it's time to refresh
-  const checkRefreshTime = useCallback(() => {
+  const checkRefreshTime = React.useCallback(() => {
     const lastRefresh = sessionStorage.getItem(LAST_REFRESH_KEY);
     if (!lastRefresh) return false;
 
@@ -31,7 +31,7 @@ export const useAutoRefresh = () => {
   }, []);
 
   // Calculate time remaining until next refresh
-  const calculateTimeRemaining = useCallback(() => {
+  const calculateTimeRemaining = React.useCallback(() => {
     const lastRefresh = sessionStorage.getItem(LAST_REFRESH_KEY);
     if (!lastRefresh) return REFRESH_INTERVAL_MS;
 
@@ -41,7 +41,7 @@ export const useAutoRefresh = () => {
   }, []);
 
   // Mark refresh as completed
-  const markRefreshComplete = useCallback(() => {
+  const markRefreshComplete = React.useCallback(() => {
     const now = Date.now();
     sessionStorage.setItem(LAST_REFRESH_KEY, now.toString());
     setShouldRefresh(false);
@@ -50,7 +50,7 @@ export const useAutoRefresh = () => {
   }, []);
 
   // Reset timer (called when user manually refreshes questions)
-  const resetRefreshTimer = useCallback(() => {
+  const resetRefreshTimer = React.useCallback(() => {
     const now = Date.now();
     sessionStorage.setItem(LAST_REFRESH_KEY, now.toString());
     setShouldRefresh(false);
@@ -58,7 +58,7 @@ export const useAutoRefresh = () => {
   }, []);
 
   // Main timer effect
-  useEffect(() => {
+  React.useEffect(() => {
     const interval = setInterval(() => {
       if (checkRefreshTime()) {
         setShouldRefresh(true);
@@ -70,7 +70,7 @@ export const useAutoRefresh = () => {
   }, [checkRefreshTime, calculateTimeRemaining]);
 
   // Format time remaining as HH:MM:SS
-  const formatTimeRemaining = useCallback(() => {
+  const formatTimeRemaining = React.useCallback(() => {
     const hours = Math.floor(timeUntilRefresh / (1000 * 60 * 60));
     const minutes = Math.floor((timeUntilRefresh % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((timeUntilRefresh % (1000 * 60)) / 1000);
