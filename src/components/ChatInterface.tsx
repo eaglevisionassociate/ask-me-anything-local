@@ -233,6 +233,7 @@ Please provide educational, age-appropriate explanations that would help a Grade
             isLoading={isLoading}
             disabled={!isPuterReady()}
             placeholder={tutorContext && tutorContext.id === "math" ? "Ask for help, correction, or new exercises..." : tutorContext ? `Ask me about ${tutorContext.name}...` : "Ask me anything..."}
+            subjectId={tutorContext?.id || 'general'}
           />
         </div>
       </div>

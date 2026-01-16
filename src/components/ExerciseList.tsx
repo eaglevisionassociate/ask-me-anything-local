@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { useExercises, Exercise } from '@/hooks/useExercises';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
-import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer, Camera, Upload, Calculator } from 'lucide-react';
+import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer, Camera, Upload, Calculator, Pencil } from 'lucide-react';
 import { MathCalculatorKeyboard } from '@/components/MathCalculatorKeyboard';
+import { KidDrawingPad } from '@/components/KidDrawingPad';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatMathExpression } from '@/lib/fractionUtils';
 import { Fraction, renderMathExpression } from '@/components/ui/fraction';
@@ -19,10 +20,11 @@ import { usePuterAI } from '@/hooks/usePuterAI';
 interface ExerciseListProps {
   lessonId?: string;
   topic?: string;
+  subjectId?: string; // math, science, english, social
   onExerciseSelect?: (exercise: Exercise) => void;
 }
 
-export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseListProps) => {
+export const ExerciseList = ({ lessonId, topic, subjectId = 'math', onExerciseSelect }: ExerciseListProps) => {
   const { exercises, loading, error, refetch } = useExercises(lessonId);
   const { generateExercise, isGenerating } = useGenerateExercise();
   const { completeExercise } = useActivityTracking();
@@ -664,24 +666,67 @@ Respond ONLY with valid JSON in this exact format:
                   </div>
                 </div>
 
-                <div className="text-center text-sm text-muted-foreground flex items-center gap-2 justify-center">
-                  <Calculator className="w-4 h-4" />
-                  <span>— OR use the calculator below —</span>
-                </div>
+                {/* Show Math Calculator only for math subject */}
+                {subjectId === 'math' && (
+                  <>
+                    <div className="text-center text-sm text-muted-foreground flex items-center gap-2 justify-center">
+                      <Calculator className="w-4 h-4" />
+                      <span>— OR use the calculator below —</span>
+                    </div>
 
-                {/* Math Calculator Keyboard */}
-                <div>
-                  <div className="flex items-center gap-2 mb-3">
-                    <Calculator className="w-5 h-5 text-primary" />
-                    <label className="text-sm font-semibold text-primary">Math Calculator</label>
+                    <div>
+                      <div className="flex items-center gap-2 mb-3">
+                        <Calculator className="w-5 h-5 text-primary" />
+                        <label className="text-sm font-semibold text-primary">Math Calculator</label>
+                      </div>
+                      <MathCalculatorKeyboard
+                        value={userAnswers[exercise.id] || ''}
+                        onChange={(value) => handleAnswerChange(exercise.id, value)}
+                        onSubmit={() => handleSubmitAnswer(exercise.id)}
+                        disabled={submittedAnswers[exercise.id]}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Show Drawing Pad for science and other subjects that need visual answers */}
+                {(subjectId === 'science' || subjectId === 'social') && (
+                  <>
+                    <div className="text-center text-sm text-muted-foreground flex items-center gap-2 justify-center">
+                      <Pencil className="w-4 h-4" />
+                      <span>— OR draw your answer below —</span>
+                    </div>
+
+                    <KidDrawingPad
+                      subject={subjectId}
+                      onSave={(dataURL) => {
+                        // Save the drawing as the answer
+                        handleAnswerChange(exercise.id, `[Drawing submitted]`);
+                        setUploadPreviews(prev => ({ ...prev, [exercise.id]: dataURL }));
+                        toast({
+                          title: "Drawing Saved! 🎨",
+                          description: "Your drawing has been saved. Click 'Submit Answer' to submit.",
+                        });
+                      }}
+                    />
+                  </>
+                )}
+
+                {/* For English - show simple text input */}
+                {subjectId === 'english' && (
+                  <div className="space-y-3">
+                    <div className="text-center text-sm text-muted-foreground">
+                      ✍️ Type your answer below
+                    </div>
+                    <Textarea
+                      placeholder="Type your answer here..."
+                      value={userAnswers[exercise.id] || ''}
+                      onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
+                      disabled={submittedAnswers[exercise.id]}
+                      className="min-h-[100px] text-base"
+                    />
                   </div>
-                  <MathCalculatorKeyboard
-                    value={userAnswers[exercise.id] || ''}
-                    onChange={(value) => handleAnswerChange(exercise.id, value)}
-                    onSubmit={() => handleSubmitAnswer(exercise.id)}
-                    disabled={submittedAnswers[exercise.id]}
-                  />
-                </div>
+                )}
 
                 <div className="flex items-center gap-2">
                   {!submittedAnswers[exercise.id] ? (
