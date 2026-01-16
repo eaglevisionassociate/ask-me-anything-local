@@ -740,8 +740,8 @@ Respond ONLY with valid JSON in this exact format:
                   </div>
                 </div>
 
-                {/* Show Math Calculator only for math subject */}
-                {subjectId === 'math' && (
+                {/* Show Calculator for math and science subjects */}
+                {(subjectId === 'math' || subjectId === 'science') && (
                   <>
                     <div className="text-center text-sm text-muted-foreground flex items-center gap-2 justify-center">
                       <Calculator className="w-4 h-4" />
@@ -751,7 +751,9 @@ Respond ONLY with valid JSON in this exact format:
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <Calculator className="w-5 h-5 text-primary" />
-                        <label className="text-sm font-semibold text-primary">Math Calculator</label>
+                        <label className="text-sm font-semibold text-primary">
+                          {subjectId === 'science' ? 'Science Calculator' : 'Math Calculator'}
+                        </label>
                       </div>
                       <MathCalculatorKeyboard
                         value={userAnswers[exercise.id] || ''}
@@ -760,11 +762,28 @@ Respond ONLY with valid JSON in this exact format:
                         disabled={submittedAnswers[exercise.id]}
                       />
                     </div>
+
+                    <div className="text-center text-sm text-muted-foreground flex items-center gap-2 justify-center">
+                      <Pencil className="w-4 h-4" />
+                      <span>— OR draw your answer below —</span>
+                    </div>
+
+                    <KidDrawingPad
+                      subject={subjectId}
+                      onSave={(dataURL) => {
+                        handleAnswerChange(exercise.id, `[Drawing submitted]`);
+                        setUploadPreviews(prev => ({ ...prev, [exercise.id]: dataURL }));
+                        toast({
+                          title: "Drawing Saved! 🎨",
+                          description: "Your drawing has been saved. Click 'Submit Answer' to submit.",
+                        });
+                      }}
+                    />
                   </>
                 )}
 
-                {/* Show Drawing Pad for science and other subjects that need visual answers */}
-                {(subjectId === 'science' || subjectId === 'social') && (
+                {/* Show Drawing Pad only for social subject */}
+                {subjectId === 'social' && (
                   <>
                     <div className="text-center text-sm text-muted-foreground flex items-center gap-2 justify-center">
                       <Pencil className="w-4 h-4" />
@@ -774,7 +793,6 @@ Respond ONLY with valid JSON in this exact format:
                     <KidDrawingPad
                       subject={subjectId}
                       onSave={(dataURL) => {
-                        // Save the drawing as the answer
                         handleAnswerChange(exercise.id, `[Drawing submitted]`);
                         setUploadPreviews(prev => ({ ...prev, [exercise.id]: dataURL }));
                         toast({
