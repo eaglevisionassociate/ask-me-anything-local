@@ -77,8 +77,8 @@ export const TutorDashboard = () => {
   };
 
   const handleSubjectSelect = (subject: Subject) => {
-    if (subject.id !== "math") {
-      return; // Only Math is available
+    if (subject.id !== "math" && subject.id !== "science") {
+      return; // Only Math and Science are available
     }
     setSelectedSubject(subject);
     setActiveTab("lessons");
@@ -296,68 +296,88 @@ export const TutorDashboard = () => {
           </TabsContent>
 
           <TabsContent value="subjects" className="space-y-6">
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm font-medium text-blue-800">
-                📚 Mathematics is available! Science, English and Social Studies are under development.
+            <div className="mb-4 p-4 bg-primary/10 border border-primary/20 rounded-lg">
+              <p className="text-sm font-medium text-foreground">
+                📚 Mathematics is available! Science is now accessible (Under Development). English and Social Studies coming soon.
               </p>
             </div>
             
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-              {subjects.map((subject) => (
-                <Card 
-                  key={subject.id} 
-                  className={`transition-shadow ${
-                    subject.id === "math" 
-                      ? "cursor-pointer hover:shadow-md" 
-                      : "opacity-60 cursor-not-allowed"
-                  }`}
-                  onClick={() => handleSubjectSelect(subject)}
-                >
-                  <CardHeader>
-                    <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 ${subject.color} rounded-xl flex items-center justify-center`}>
-                        <subject.icon className={`w-6 h-6 ${subject.id === "math" ? "text-white" : "text-muted-foreground"}`} />
+              {subjects.map((subject) => {
+                const isAvailable = subject.id === "math" || subject.id === "science";
+                return (
+                  <Card 
+                    key={subject.id} 
+                    className={`transition-shadow ${
+                      isAvailable 
+                        ? "cursor-pointer hover:shadow-md" 
+                        : "opacity-60 cursor-not-allowed"
+                    }`}
+                    onClick={() => handleSubjectSelect(subject)}
+                  >
+                    <CardHeader>
+                      <div className="flex items-center gap-3">
+                        <div className={`w-12 h-12 ${subject.color} rounded-xl flex items-center justify-center`}>
+                          <subject.icon className={`w-6 h-6 ${isAvailable ? "text-white" : "text-muted-foreground"}`} />
+                        </div>
+                        <div className="flex-1">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            {subject.name}
+                            {subject.id === "science" && (
+                              <Badge variant="outline" className="text-xs border-yellow-500 text-yellow-600">Beta</Badge>
+                            )}
+                            {subject.id !== "math" && subject.id !== "science" && (
+                              <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
+                            )}
+                          </CardTitle>
+                          <CardDescription>
+                            {subject.id === "math" ? `${subject.progress}% Complete` : 
+                             subject.id === "science" ? "Under Development" : "Coming Soon"}
+                          </CardDescription>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          {subject.name}
-                          {subject.id !== "math" && (
-                            <Badge variant="secondary" className="text-xs">Coming Soon</Badge>
-                          )}
-                        </CardTitle>
-                        <CardDescription>
-                          {subject.id === "math" ? `${subject.progress}% Complete` : "Under Development"}
-                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Progress value={subject.progress} className="mb-4" />
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium text-muted-foreground mb-2">Topics:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {subject.topics.map((topic) => (
+                            <Badge key={topic} variant="outline" className="text-xs">
+                              {topic}
+                            </Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <Progress value={subject.progress} className="mb-4" />
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-muted-foreground mb-2">Topics:</p>
-                      <div className="flex flex-wrap gap-1">
-                        {subject.topics.map((topic) => (
-                          <Badge key={topic} variant="outline" className="text-xs">
-                            {topic}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                    <Button 
-                      className="w-full mt-4" 
-                      onClick={() => handleSubjectSelect(subject)}
-                      disabled={subject.id !== "math"}
-                    >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      {subject.id === "math" ? "Start Learning" : "Coming Soon"}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
+                      <Button 
+                        className="w-full mt-4" 
+                        onClick={() => handleSubjectSelect(subject)}
+                        disabled={!isAvailable}
+                      >
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        {subject.id === "math" ? "Start Learning" : 
+                         subject.id === "science" ? "Explore Science" : "Coming Soon"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </TabsContent>
 
           <TabsContent value="lessons" className="space-y-6">
+            {/* Under Development Banner for Science */}
+            {selectedSubject?.id === "science" && (
+              <div className="p-6 bg-yellow-500/20 border-2 border-yellow-500 rounded-xl text-center">
+                <h2 className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">
+                  🚧 UNDER DEVELOPMENT 🚧
+                </h2>
+                <p className="text-lg text-muted-foreground">
+                  Science exercises are being built. You can explore the available topics below!
+                </p>
+              </div>
+            )}
+
             {/* Topic Selector */}
             <Card>
               <CardHeader>
@@ -391,7 +411,11 @@ export const TutorDashboard = () => {
             ) : (
               <Card>
                 <CardContent className="py-8 text-center">
-                  <Calculator className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  {selectedSubject?.id === "science" ? (
+                    <Beaker className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  ) : (
+                    <Calculator className="w-12 h-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+                  )}
                   <p className="text-muted-foreground">Select a topic above to view lessons</p>
                 </CardContent>
               </Card>
