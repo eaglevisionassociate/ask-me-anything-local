@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { useExercises, Exercise } from '@/hooks/useExercises';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
-import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer, Camera, Upload, Calculator, Pencil } from 'lucide-react';
+import { useAutoRefresh } from '@/hooks/useAutoRefresh';
+import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer, Camera, Upload, Calculator, Pencil, Clock, RefreshCw } from 'lucide-react';
 import { MathCalculatorKeyboard } from '@/components/MathCalculatorKeyboard';
 import { KidDrawingPad } from '@/components/KidDrawingPad';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -28,6 +29,7 @@ export const ExerciseList = ({ lessonId, topic, subjectId = 'math', onExerciseSe
   const { exercises, loading, error, refetch } = useExercises(lessonId);
   const { generateExercise, isGenerating } = useGenerateExercise();
   const { completeExercise } = useActivityTracking();
+  const { shouldRefresh, formattedTimeRemaining, markRefreshComplete, resetRefreshTimer } = useAutoRefresh();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { generateResponse: generatePuterResponse, isPuterReady } = usePuterAI();
@@ -40,6 +42,59 @@ export const ExerciseList = ({ lessonId, topic, subjectId = 'math', onExerciseSe
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: File | null }>({});
   const [uploadPreviews, setUploadPreviews] = useState<{ [key: string]: string }>({});
   const [isProcessingUpload, setIsProcessingUpload] = useState<{ [key: string]: boolean }>({});
+  const [isAutoGenerating, setIsAutoGenerating] = useState(false);
+
+  // Auto-refresh questions every 1.5 hours
+  useEffect(() => {
+    const handleAutoRefresh = async () => {
+      if (shouldRefresh && !isAutoGenerating && !isGenerating) {
+        setIsAutoGenerating(true);
+        
+        toast({
+          title: "🔄 Time for new questions!",
+          description: "Generating fresh practice problems for you...",
+        });
+
+        try {
+          // Generate 3 new exercises
+          await generateExercise({
+            lessonId,
+            topic: topic || 'mixed',
+            difficulty: 'medium',
+            count: 3
+          });
+          
+          // Refetch to get the new exercises
+          await refetch();
+          
+          // Clear previous answers and states for fresh start
+          setUserAnswers({});
+          setShowAnswers({});
+          setSubmittedAnswers({});
+          setAnswerFeedback({});
+          setSelectedExercise(null);
+          
+          markRefreshComplete();
+          
+          toast({
+            title: "✨ New questions ready!",
+            description: "Fresh practice problems have been added. Keep learning!",
+          });
+        } catch (err) {
+          console.error('Auto-refresh failed:', err);
+          toast({
+            title: "Refresh failed",
+            description: "Could not generate new questions. Try again later.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsAutoGenerating(false);
+        }
+      }
+    };
+
+    handleAutoRefresh();
+  }, [shouldRefresh, isAutoGenerating, isGenerating, lessonId, topic, generateExercise, refetch, markRefreshComplete, toast]);
 
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(selectedExercise === exercise.id ? null : exercise.id);
@@ -517,9 +572,25 @@ Respond ONLY with valid JSON in this exact format:
 
   return (
     <div className="space-y-4">
+      {/* Auto-refresh timer banner */}
+      <div className="flex items-center justify-between bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/30 dark:to-purple-950/30 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+        <div className="flex items-center gap-2">
+          <Clock className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+          <span className="text-sm text-blue-700 dark:text-blue-300">
+            New questions in: <strong>{formattedTimeRemaining}</strong>
+          </span>
+        </div>
+        {(isAutoGenerating || isGenerating) && (
+          <div className="flex items-center gap-2 text-sm text-purple-600 dark:text-purple-400">
+            <RefreshCw className="w-4 h-4 animate-spin" />
+            <span>Generating new questions...</span>
+          </div>
+        )}
+      </div>
+
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Math Exercises</h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline">{exercises.length} problems</Badge>
           <Button
             onClick={handlePrintExercises}
@@ -540,17 +611,20 @@ Respond ONLY with valid JSON in this exact format:
             Reset
           </Button>
           <Button
-            onClick={handleGenerateExercise}
-            disabled={isGenerating}
+            onClick={() => {
+              handleGenerateExercise();
+              resetRefreshTimer();
+            }}
+            disabled={isGenerating || isAutoGenerating}
             size="sm"
             className="gap-2"
           >
-            {isGenerating ? (
+            {isGenerating || isAutoGenerating ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Plus className="w-4 h-4" />
             )}
-            {isGenerating ? 'Generating...' : 'Add More'}
+            {isGenerating || isAutoGenerating ? 'Generating...' : 'Add More'}
           </Button>
         </div>
       </div>
