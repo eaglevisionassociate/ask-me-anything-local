@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { useExercises, Exercise } from '@/hooks/useExercises';
 import { useGenerateExercise } from '@/hooks/useGenerateExercise';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
-import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer, Camera, Upload } from 'lucide-react';
+import { Loader2, Brain, CheckCircle, XCircle, Eye, EyeOff, Plus, RotateCcw, Printer, Camera, Upload, Calculator } from 'lucide-react';
+import { MathCalculatorKeyboard } from '@/components/MathCalculatorKeyboard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatMathExpression } from '@/lib/fractionUtils';
 import { Fraction, renderMathExpression } from '@/components/ui/fraction';
@@ -34,7 +35,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
   const [showAnswers, setShowAnswers] = useState<{ [key: string]: boolean }>({});
   const [submittedAnswers, setSubmittedAnswers] = useState<{ [key: string]: boolean }>({});
   const [answerFeedback, setAnswerFeedback] = useState<{ [key: string]: { isCorrect: boolean; feedback: string; explanationSteps?: string[] } }>({});
-  const [fractionInput, setFractionInput] = useState<{ [key: string]: { numerator: string; denominator: string; isEditing: boolean } }>({});
   const [uploadedFiles, setUploadedFiles] = useState<{ [key: string]: File | null }>({});
   const [uploadPreviews, setUploadPreviews] = useState<{ [key: string]: string }>({});
   const [isProcessingUpload, setIsProcessingUpload] = useState<{ [key: string]: boolean }>({});
@@ -42,14 +42,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
   const handleExerciseClick = (exercise: Exercise) => {
     setSelectedExercise(selectedExercise === exercise.id ? null : exercise.id);
     onExerciseSelect?.(exercise);
-    
-    // Initialize fraction input state for this exercise
-    if (!fractionInput[exercise.id]) {
-      setFractionInput(prev => ({
-        ...prev,
-        [exercise.id]: { numerator: '', denominator: '', isEditing: false }
-      }));
-    }
   };
 
   const handleAnswerChange = (exerciseId: string, answer: string) => {
@@ -57,58 +49,6 @@ export const ExerciseList = ({ lessonId, topic, onExerciseSelect }: ExerciseList
       ...prev,
       [exerciseId]: answer
     }));
-  };
-
-  const handleFractionInput = (exerciseId: string, field: 'numerator' | 'denominator', value: string) => {
-    setFractionInput(prev => ({
-      ...prev,
-      [exerciseId]: {
-        ...prev[exerciseId],
-        [field]: value
-      }
-    }));
-  };
-
-  const handleInsertFraction = (exerciseId: string, operator?: string) => {
-    const fraction = fractionInput[exerciseId];
-    if (!fraction?.numerator || !fraction?.denominator) return;
-
-    // Use a user-friendly fraction format instead of LaTeX
-    const fractionText = `(${fraction.numerator})/(${fraction.denominator})`;
-    
-    // Add the fraction to the current answer with optional operator
-    const currentAnswer = userAnswers[exerciseId] || '';
-    const newAnswer = operator ? currentAnswer + ` ${operator} ${fractionText}` : currentAnswer + fractionText;
-    
-    handleAnswerChange(exerciseId, newAnswer);
-    
-    // Reset fraction input
-    setFractionInput(prev => ({
-      ...prev,
-      [exerciseId]: { numerator: '', denominator: '', isEditing: false }
-    }));
-  };
-
-  const toggleFractionEditor = (exerciseId: string) => {
-    setFractionInput(prev => ({
-      ...prev,
-      [exerciseId]: {
-        ...prev[exerciseId],
-        isEditing: !prev[exerciseId]?.isEditing
-      }
-    }));
-  };
-
-  const insertCommonFraction = (exerciseId: string, fraction: string) => {
-    const currentAnswer = userAnswers[exerciseId] || '';
-    const newAnswer = currentAnswer + fraction;
-    handleAnswerChange(exerciseId, newAnswer);
-  };
-
-  const insertOperator = (exerciseId: string, operator: string) => {
-    const currentAnswer = userAnswers[exerciseId] || '';
-    const newAnswer = currentAnswer + ` ${operator} `;
-    handleAnswerChange(exerciseId, newAnswer);
   };
 
   const handleFileUpload = (exerciseId: string, event: React.ChangeEvent<HTMLInputElement>) => {
@@ -463,7 +403,6 @@ Respond ONLY with valid JSON in this exact format:
     setShowAnswers({});
     setSubmittedAnswers({});
     setAnswerFeedback({});
-    setFractionInput({});
     setUploadedFiles({});
     setUploadPreviews({});
     setIsProcessingUpload({});
@@ -725,239 +664,23 @@ Respond ONLY with valid JSON in this exact format:
                   </div>
                 </div>
 
-                <div className="text-center text-sm text-muted-foreground">
-                  <span>— OR type your answer below —</span>
+                <div className="text-center text-sm text-muted-foreground flex items-center gap-2 justify-center">
+                  <Calculator className="w-4 h-4" />
+                  <span>— OR use the calculator below —</span>
                 </div>
 
+                {/* Math Calculator Keyboard */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Type Your Answer:</label>
-                  <div className="space-y-2">
-                    {/* Simple Fraction Input */}
-                    <div className="p-3 bg-muted/50 rounded-lg space-y-3">
-                      <div className="text-sm font-medium">Build Fraction:</div>
-                      <div className="grid grid-cols-3 gap-2 items-end">
-                        <div>
-                          <label className="text-xs text-muted-foreground block mb-1">Numerator</label>
-                          <input
-                            type="text"
-                            value={fractionInput[exercise.id]?.numerator || ''}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              handleFractionInput(exercise.id, 'numerator', e.target.value);
-                            }}
-                            className="w-full px-2 py-1 text-sm border rounded text-center bg-background"
-                            placeholder="Top"
-                          />
-                        </div>
-                        <div className="text-center">
-                          <div className="text-2xl font-light text-muted-foreground">/</div>
-                        </div>
-                        <div>
-                          <label className="text-xs text-muted-foreground block mb-1">Denominator</label>
-                          <input
-                            type="text"
-                            value={fractionInput[exercise.id]?.denominator || ''}
-                            onChange={(e) => {
-                              e.stopPropagation();
-                              handleFractionInput(exercise.id, 'denominator', e.target.value);
-                            }}
-                            className="w-full px-2 py-1 text-sm border rounded text-center bg-background"
-                            placeholder="Bottom"
-                          />
-                        </div>
-                      </div>
-                      {fractionInput[exercise.id]?.numerator && fractionInput[exercise.id]?.denominator && (
-                        <div className="text-center">
-                          <div className="text-xs text-muted-foreground mb-1">Preview:</div>
-                          <Fraction 
-                            numerator={fractionInput[exercise.id].numerator} 
-                            denominator={fractionInput[exercise.id].denominator}
-                            className="text-lg"
-                          />
-                        </div>
-                      )}
-                      <div className="grid grid-cols-4 gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInsertFraction(exercise.id);
-                          }}
-                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                          className="col-span-4"
-                        >
-                          Add Fraction
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInsertFraction(exercise.id, '+');
-                          }}
-                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                        >
-                          + Fraction
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInsertFraction(exercise.id, '-');
-                          }}
-                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                        >
-                          - Fraction
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInsertFraction(exercise.id, '×');
-                          }}
-                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                        >
-                          × Fraction
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleInsertFraction(exercise.id, '÷');
-                          }}
-                          disabled={!fractionInput[exercise.id]?.numerator || !fractionInput[exercise.id]?.denominator}
-                        >
-                          ÷ Fraction
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {/* Math Operators */}
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <div className="text-sm font-medium mb-2">Math Operators:</div>
-                      <div className="grid grid-cols-4 gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            insertOperator(exercise.id, '+');
-                          }}
-                        >
-                          +
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            insertOperator(exercise.id, '-');
-                          }}
-                        >
-                          -
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            insertOperator(exercise.id, '×');
-                          }}
-                        >
-                          ×
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            insertOperator(exercise.id, '÷');
-                          }}
-                        >
-                          ÷
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            insertOperator(exercise.id, '=');
-                          }}
-                        >
-                          =
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            insertOperator(exercise.id, '<');
-                          }}
-                        >
-                          &lt;
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            insertOperator(exercise.id, '>');
-                          }}
-                        >
-                          &gt;
-                        </Button>
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            insertOperator(exercise.id, '√');
-                          }}
-                        >
-                          √
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    {/* Combined Answer Input */}
-                    <div className="space-y-2">
-                      <div className="text-sm font-medium">Write your solution here:</div>
-                      <div className="min-h-16 p-3 border rounded-md bg-background font-mono text-lg flex items-center">
-                        {userAnswers[exercise.id] ? (
-                          <div className="w-full">
-                            {topic?.toLowerCase().includes('science') 
-                              ? userAnswers[exercise.id] 
-                              : renderMathExpression(userAnswers[exercise.id])}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">Your answer will appear here as you type or use the tools above...</span>
-                        )}
-                      </div>
-                      <Textarea
-                        placeholder="Type your answer here or use the fraction tools and operators above..."
-                        value={userAnswers[exercise.id] || ''}
-                        onChange={(e) => handleAnswerChange(exercise.id, e.target.value)}
-                        className="min-h-20 font-mono"
-                        data-exercise-id={exercise.id}
-                      />
-                    </div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calculator className="w-5 h-5 text-primary" />
+                    <label className="text-sm font-semibold text-primary">Math Calculator</label>
                   </div>
+                  <MathCalculatorKeyboard
+                    value={userAnswers[exercise.id] || ''}
+                    onChange={(value) => handleAnswerChange(exercise.id, value)}
+                    onSubmit={() => handleSubmitAnswer(exercise.id)}
+                    disabled={submittedAnswers[exercise.id]}
+                  />
                 </div>
 
                 <div className="flex items-center gap-2">

@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, HelpCircle, Calculator } from "lucide-react";
+import { Send, Loader2, HelpCircle, Calculator, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { MathExpressionBuilder } from "./MathExpressionBuilder";
+import { MathCalculatorKeyboard } from "./MathCalculatorKeyboard";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -16,6 +16,7 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
   const [message, setMessage] = useState("");
   const [showQuestions, setShowQuestions] = useState(false);
   const [showMathBuilder, setShowMathBuilder] = useState(false);
+  const [mathExpression, setMathExpression] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const quickQuestions = [
@@ -64,20 +65,45 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
 
   const toggleMathBuilder = () => {
     setShowMathBuilder(!showMathBuilder);
+    if (!showMathBuilder) {
+      setMathExpression("");
+    }
   };
 
-  const handleMathSubmit = (expression: string) => {
-    onSendMessage(expression);
-    setShowMathBuilder(false);
+  const handleMathSubmit = () => {
+    if (mathExpression.trim()) {
+      onSendMessage(mathExpression.trim());
+      setMathExpression("");
+      setShowMathBuilder(false);
+    }
   };
 
   return (
     <div className="space-y-2">
       {showMathBuilder && (
-        <MathExpressionBuilder
-          onSubmit={handleMathSubmit}
-          onCancel={() => setShowMathBuilder(false)}
-        />
+        <Card className="p-4 border-border bg-card">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2">
+              <Calculator className="w-4 h-4 text-primary" />
+              Math Calculator
+            </h3>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowMathBuilder(false)}
+              className="h-6 w-6"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+          <MathCalculatorKeyboard
+            value={mathExpression}
+            onChange={setMathExpression}
+            onSubmit={handleMathSubmit}
+            disabled={isLoading || disabled}
+          />
+        </Card>
       )}
       <form onSubmit={handleSubmit} className="flex gap-3 items-end">
         <div className="flex-1 relative" ref={dropdownRef}>
