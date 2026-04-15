@@ -17,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatMathExpression } from '@/lib/fractionUtils';
 import { Fraction, renderMathExpression } from '@/components/ui/fraction';
 import { useToast } from "@/hooks/use-toast";
-import Tesseract from 'tesseract.js';
+
 import { usePuterAI } from '@/hooks/usePuterAI';
 
 interface ExerciseListProps {
