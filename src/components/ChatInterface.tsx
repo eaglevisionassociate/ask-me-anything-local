@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import * as React from "react";
+const { useEffect, useRef } = React;
 import { ChatMessage } from "./ChatMessage";
 import { ChatInput } from "./ChatInput";
 import { TypingIndicator } from "./TypingIndicator";
