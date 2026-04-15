@@ -160,10 +160,25 @@ export const ExerciseList = ({ lessonId, topic, subjectId = 'math', onExerciseSe
       let extractedText = "";
       
       if (file.type.startsWith('image/')) {
-        const result = await Tesseract.recognize(file, 'eng', {
-          logger: m => console.log(m)
-        });
-        extractedText = result.data.text;
+        // Use Puter AI for OCR if available
+        if (window.puter?.ai) {
+          const base64 = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          try {
+            const response = await window.puter.ai.chat(
+              `Extract ALL text from this image exactly as written. Only return the extracted text, nothing else. Image: ${base64}`,
+              { model: 'claude-sonnet-4' }
+            );
+            extractedText = response?.message?.content?.[0]?.text || response?.text || String(response);
+          } catch {
+            extractedText = "Could not extract text from image.";
+          }
+        } else {
+          extractedText = "AI not available. Please refresh the page.";
+        }
       } else if (file.type === 'application/pdf') {
         // For PDF files, we'll use a placeholder text since PDF processing is more complex
         extractedText = "[PDF content would be processed here]";
