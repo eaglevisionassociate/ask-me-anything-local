@@ -59,6 +59,38 @@ export const AlphabetKeyboard: React.FC<AlphabetKeyboardProps> = ({
         </div>
       </div>
 
+      {/* Math symbols row */}
+      <div className="flex justify-center gap-1 flex-wrap">
+        {mathSymbols.map((sym) => (
+          <Button
+            key={sym}
+            variant="outline"
+            size="sm"
+            onClick={() => onChange(value + sym)}
+            disabled={disabled}
+            className="w-8 h-10 text-lg font-bold bg-primary/10 hover:bg-primary/20 text-primary border-primary/30"
+          >
+            {sym}
+          </Button>
+        ))}
+      </div>
+
+      {/* Math extras row */}
+      <div className="flex justify-center gap-1 flex-wrap">
+        {mathExtras.map((sym) => (
+          <Button
+            key={sym}
+            variant="outline"
+            size="sm"
+            onClick={() => onChange(value + sym)}
+            disabled={disabled}
+            className="w-8 h-10 text-lg font-bold bg-accent/20 hover:bg-accent/30 text-accent-foreground border-accent/30"
+          >
+            {sym}
+          </Button>
+        ))}
+      </div>
+
       {/* Number row */}
       <div className="flex justify-center gap-1">
         {numbers.map((num) => (
