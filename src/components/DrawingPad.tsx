@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import * as React from "react";
+const { useEffect, useRef, useState } = React;
 import { Canvas as FabricCanvas, Circle, Rect, Line } from "fabric";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
