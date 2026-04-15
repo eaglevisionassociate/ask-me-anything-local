@@ -1,11 +1,14 @@
 import { toast as sonnerToast } from "sonner"
 import type { ReactNode } from "react"
 
+type ToastVariant = "default" | "destructive" | "success"
+
 type ToastOptions = {
-  id?: string
+  id?: string | number
   title?: ReactNode
   description?: ReactNode
-  action?: ReactNode
+  action?: any
+  variant?: ToastVariant
 }
 
 type DismissableToast = {
@@ -14,22 +17,33 @@ type DismissableToast = {
   update: (next: ToastOptions) => void
 }
 
-const openToast = ({ title, description, action, ...props }: ToastOptions = {}): DismissableToast => {
-  const id = sonnerToast(title ?? description ?? "Notification", {
+const showToast = ({ title, description, action, variant, ...props }: ToastOptions = {}) => {
+  const message = title ?? description ?? "Notification"
+  const options = {
     id: props.id,
     description: title ? description : undefined,
     action,
-  })
+  }
+
+  if (variant === "destructive") {
+    return sonnerToast.error(message, options)
+  }
+
+  if (variant === "success") {
+    return sonnerToast.success(message, options)
+  }
+
+  return sonnerToast(message, options)
+}
+
+const openToast = ({ title, description, action, variant, ...props }: ToastOptions = {}): DismissableToast => {
+  const id = showToast({ title, description, action, variant, ...props })
 
   return {
     id,
     dismiss: () => sonnerToast.dismiss(id),
     update: (next) => {
-      sonnerToast(next.title ?? next.description ?? "Notification", {
-        id,
-        description: next.title ? next.description : undefined,
-        action: next.action,
-      })
+      showToast({ ...next, id })
     },
   }
 }
@@ -38,7 +52,7 @@ function useToast() {
   return {
     toasts: [],
     toast: openToast,
-    dismiss: (toastId?: string) => sonnerToast.dismiss(toastId),
+    dismiss: (toastId?: string | number) => sonnerToast.dismiss(toastId),
   }
 }
 
