@@ -24,7 +24,9 @@ export const AlphabetKeyboard: React.FC<AlphabetKeyboardProps> = ({
   ];
 
   const numbers = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
-  const punctuation = ['.', ',', '!', '?', "'", '-', '(', ')'];
+  const mathSymbols = ['+', '-', '×', '÷', '=', '<', '>', '%', '√', 'π'];
+  const mathExtras = ['²', '³', '°', '/', '(', ')', '[', ']', '{', '}'];
+  const punctuation = ['.', ',', '!', '?', "'", ':', ';', '"'];
 
   const handleKeyPress = (key: string) => {
     if (disabled) return;
