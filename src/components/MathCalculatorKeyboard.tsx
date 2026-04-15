@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+const { useState } = React;
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, ArrowRight, Trash2, Check, ArrowUp, ArrowDown, Plus, X } from 'lucide-react';
 
