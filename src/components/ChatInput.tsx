@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import * as React from "react";
+const { useState, useRef, useEffect } = React;
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Send, Loader2, HelpCircle, Calculator, X, Type, Pencil } from "lucide-react";

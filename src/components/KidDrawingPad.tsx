@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import * as React from "react";
+const { useEffect, useRef, useState, useCallback } = React;
 import { Canvas as FabricCanvas, Circle, Rect, Line, Triangle, Polygon, Ellipse, FabricText, Group } from "fabric";
 import { Button } from "@/components/ui/button";
 import { 
