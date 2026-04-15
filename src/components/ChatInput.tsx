@@ -1,22 +1,26 @@
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, HelpCircle, Calculator, X } from "lucide-react";
+import { Send, Loader2, HelpCircle, Calculator, X, Type, Pencil } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MathCalculatorKeyboard } from "./MathCalculatorKeyboard";
+import { AlphabetKeyboard } from "./AlphabetKeyboard";
+import { KidDrawingPad } from "./KidDrawingPad";
+import { InputMethodSelector, InputMethod } from "./InputMethodSelector";
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
   isLoading: boolean;
   disabled?: boolean;
   placeholder?: string;
-  subjectId?: string; // math, science, english, social - only show calculator for math
+  subjectId?: string;
 }
 
 export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "Ask me anything...", subjectId = 'math' }: ChatInputProps) => {
   const [message, setMessage] = useState("");
   const [showQuestions, setShowQuestions] = useState(false);
-  const [showMathBuilder, setShowMathBuilder] = useState(false);
+  const [activeInputMethod, setActiveInputMethod] = useState<InputMethod>(null);
+  const [alphabetValue, setAlphabetValue] = useState("");
   const [mathExpression, setMathExpression] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +39,6 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
         setShowQuestions(false);
       }
     };
-
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -60,14 +63,11 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
     setShowQuestions(false);
   };
 
-  const toggleQuestions = () => {
-    setShowQuestions(!showQuestions);
-  };
-
-  const toggleMathBuilder = () => {
-    setShowMathBuilder(!showMathBuilder);
-    if (!showMathBuilder) {
-      setMathExpression("");
+  const handleAlphabetSubmit = () => {
+    if (alphabetValue.trim()) {
+      onSendMessage(alphabetValue.trim());
+      setAlphabetValue("");
+      setActiveInputMethod(null);
     }
   };
 
@@ -75,17 +75,33 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
     if (mathExpression.trim()) {
       onSendMessage(mathExpression.trim());
       setMathExpression("");
-      setShowMathBuilder(false);
+      setActiveInputMethod(null);
     }
   };
 
+  const handleDrawingSave = (dataURL: string) => {
+    onSendMessage(`[Drawing submitted] I drew my answer. Here is my drawing: ${dataURL}`);
+    setActiveInputMethod(null);
+  };
+
+  const isMathSubject = subjectId === 'math' || subjectId === 'science';
+
   return (
-    <div className="space-y-2">
-      {/* Only show math builder for math subject */}
-      {showMathBuilder && subjectId === 'math' && (
-        <Card className="p-4 border-border bg-card">
+    <div className="space-y-3">
+      {/* Input Method Selector */}
+      <InputMethodSelector
+        activeMethod={activeInputMethod}
+        onMethodChange={setActiveInputMethod}
+        showCalculator={isMathSubject}
+        showAlphabet={true}
+        showDrawing={true}
+      />
+
+      {/* Calculator Panel */}
+      {activeInputMethod === 'calculator' && isMathSubject && (
+        <Card className="p-4 border-border bg-card animate-in slide-in-from-bottom-2">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold flex items-center gap-2">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-card-foreground">
               <Calculator className="w-4 h-4 text-primary" />
               Math Calculator
             </h3>
@@ -93,7 +109,7 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
               type="button"
               variant="ghost"
               size="icon"
-              onClick={() => setShowMathBuilder(false)}
+              onClick={() => setActiveInputMethod(null)}
               className="h-6 w-6"
             >
               <X className="w-4 h-4" />
@@ -107,6 +123,61 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
           />
         </Card>
       )}
+
+      {/* Alphabet Keyboard Panel */}
+      {activeInputMethod === 'alphabet' && (
+        <Card className="p-4 border-border bg-card animate-in slide-in-from-bottom-2">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-card-foreground">
+              <Type className="w-4 h-4 text-primary" />
+              Write Your Answer
+            </h3>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setActiveInputMethod(null)}
+              className="h-6 w-6"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+          <AlphabetKeyboard
+            value={alphabetValue}
+            onChange={setAlphabetValue}
+            onSubmit={handleAlphabetSubmit}
+            disabled={isLoading || disabled}
+          />
+        </Card>
+      )}
+
+      {/* Drawing Pad Panel */}
+      {activeInputMethod === 'drawing' && (
+        <Card className="p-4 border-border bg-card animate-in slide-in-from-bottom-2">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold flex items-center gap-2 text-card-foreground">
+              <Pencil className="w-4 h-4 text-primary" />
+              Draw Your Answer
+            </h3>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setActiveInputMethod(null)}
+              className="h-6 w-6"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+          <KidDrawingPad
+            onSave={handleDrawingSave}
+            height={300}
+            subject={subjectId}
+          />
+        </Card>
+      )}
+
+      {/* Text input + send */}
       <form onSubmit={handleSubmit} className="flex gap-3 items-end">
         <div className="flex-1 relative" ref={dropdownRef}>
           <Textarea
@@ -114,29 +185,15 @@ export const ChatInput = ({ onSendMessage, isLoading, disabled, placeholder = "A
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="min-h-[50px] max-h-32 resize-none bg-input border-border focus:ring-2 focus:ring-accent focus:border-transparent transition-smooth pr-20"
+            className="min-h-[50px] max-h-32 resize-none bg-input border-border focus:ring-2 focus:ring-accent focus:border-transparent transition-smooth pr-12"
             disabled={isLoading || disabled}
           />
           <div className="absolute right-2 top-2 flex gap-1">
-            {/* Only show calculator button for math subject */}
-            {subjectId === 'math' && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={toggleMathBuilder}
-                className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                disabled={isLoading || disabled}
-                title="Math Expression Builder"
-              >
-                <Calculator className="w-4 h-4" />
-              </Button>
-            )}
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              onClick={toggleQuestions}
+              onClick={() => setShowQuestions(!showQuestions)}
               className="h-8 w-8 text-muted-foreground hover:text-foreground"
               disabled={isLoading || disabled}
               title="Quick Questions"
